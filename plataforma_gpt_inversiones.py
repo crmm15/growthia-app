@@ -5,6 +5,7 @@ import numpy as np
 import yfinance as yf
 import matplotlib.pyplot as plt
 import datetime
+import os
 
 st.set_page_config(page_title="Agent GrowthIA M&M", layout="wide")
 st.title("🧠 Plataforma Integral para Gestión y Simulación de Inversiones")
@@ -17,6 +18,20 @@ def calcular_payoff_call(S, K, premium):
 
 def calcular_payoff_put(S, K, premium):
     return np.maximum(K - S, 0) - premium
+def registrar_accion(ticker, accion, rentab):
+    nueva_fila = pd.DataFrame([{
+        "Fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "Ticker": ticker,
+        "Acción Tomada": accion,
+        "Rentabilidad %": rentab
+    }])
+    archivo_log = "registro_acciones.csv"
+    if os.path.exists(archivo_log):
+        historial = pd.read_csv(archivo_log)
+        historial = pd.concat([historial, nueva_fila], ignore_index=True)
+    else:
+        historial = nueva_fila
+    historial.to_csv(archivo_log, index=False)
 
 archivo = st.sidebar.file_uploader("📁 Subí tu archivo Excel (.xlsx)", type=["xlsx"])
 
@@ -39,6 +54,7 @@ if archivo is not None:
                 rentab = row["Rentabilidad"]
                 precio = row["Precio Actual"]
                 dca = row["DCA"]
+
                 if pd.notna(rentab):
                     st.markdown(f"### ▶ {ticker}: {rentab:.2f}%")
                 else:
@@ -48,10 +64,22 @@ if archivo is not None:
                     st.write("🔍 Revisión: Datos incompletos o mal formateados.")
                 elif rentab >= 15:
                     st.write("🔒 Recomendación: Comprar PUT para proteger ganancias.")
+                    col1, col2 = st.columns(2)
+                    if col1.button(f"✅ Ejecutar PUT para {ticker}"):
+                        registrar_accion(ticker, "Comprar PUT", rentab)
+                        st.success(f"✔ Acción registrada para {ticker}")
+                    if col2.button(f"❌ Ignorar recomendación para {ticker}"):
+                        registrar_accion(ticker, "Ignorado", rentab)
                 elif rentab > 8:
                     st.write("🔄 Recomendación: Mantener posición.")
+                    if st.button(f"✅ Confirmar mantener {ticker}"):
+                        registrar_accion(ticker, "Mantener", rentab)
+                        st.success(f"✔ Acción registrada para {ticker}")
                 else:
                     st.write("📉 Recomendación: Revisar, baja rentabilidad.")
+                    if st.button(f"📋 Revisar manualmente {ticker}"):
+                        registrar_accion(ticker, "Revisión Manual", rentab)
+                        st.info(f"🔍 Acción registrada para {ticker}")
 
         # Sección 2: Simulador
         elif seccion == "Simulador de Opciones":
