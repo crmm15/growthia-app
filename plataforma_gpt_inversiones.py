@@ -1,0 +1,121 @@
+
+import streamlit as st
+import pandas as pd
+import numpy as np
+import yfinance as yf
+import matplotlib.pyplot as plt
+import datetime
+
+st.set_page_config(page_title="Agent GrowthIA M&M", layout="wide")
+st.title("🧠 Plataforma Integral para Gestión y Simulación de Inversiones")
+
+# Menú principal
+seccion = st.sidebar.radio("📂 Elegí una sección", ["Gestor de Portafolio", "Simulador de Opciones", "Dashboard de Desempeño"])
+
+def calcular_payoff_call(S, K, premium):
+    return np.maximum(S - K, 0) - premium
+
+def calcular_payoff_put(S, K, premium):
+    return np.maximum(K - S, 0) - premium
+
+archivo = st.sidebar.file_uploader("📁 Subí tu archivo Excel (.xlsx)", type=["xlsx"])
+
+if archivo is not None:
+    df = pd.read_excel(archivo, sheet_name="Inversiones")
+    df.columns = df.columns.str.strip()
+
+    if 'Ticker' in df.columns and 'Cantidad' in df.columns:
+        df = df[df['Ticker'].notnull() & df['Cantidad'].notnull()]
+
+        for col in ['Rentabilidad', 'Precio Actual', 'DCA']:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col].astype(str).str.replace(",", ".").str.replace("%", ""), errors="coerce")
+
+        # Sección 1: Gestor
+        if seccion == "Gestor de Portafolio":
+            st.subheader("📊 Análisis de Posiciones")
+            for _, row in df.iterrows():
+                ticker = row["Ticker"]
+                rentab = row["Rentabilidad"]
+                precio = row["Precio Actual"]
+                dca = row["DCA"]
+                if pd.notna(rentab):
+                    st.markdown(f"### ▶ {ticker}: {rentab:.2f}%")
+                else:
+                    st.markdown(f"### ▶ {ticker}: nan%")
+
+                if pd.isna(rentab):
+                    st.write("🔍 Revisión: Datos incompletos o mal formateados.")
+                elif rentab >= 15:
+                    st.write("🔒 Recomendación: Comprar PUT para proteger ganancias.")
+                elif rentab > 8:
+                    st.write("🔄 Recomendación: Mantener posición.")
+                else:
+                    st.write("📉 Recomendación: Revisar, baja rentabilidad.")
+
+        # Sección 2: Simulador
+        elif seccion == "Simulador de Opciones":
+            st.subheader("📈 Simulador de Opciones con Perfil de Riesgo")
+            selected_ticker = st.selectbox("Seleccioná un ticker", df["Ticker"].unique())
+            nivel_riesgo = st.radio("🎯 Tu perfil de riesgo", ["Conservador", "Balanceado", "Agresivo"], index=1)
+            tipo_opcion = st.radio("Tipo de opción", ["CALL", "PUT"])
+            sugerencia = {"Conservador": 5, "Balanceado": 10, "Agresivo": 20}
+            delta_strike = st.slider("🧮 % sobre el precio actual para el strike", -30, 30, sugerencia[nivel_riesgo])
+            dias_a_vencimiento = st.slider("📆 Días hasta vencimiento", 7, 90, 30)
+
+            datos = df[df["Ticker"] == selected_ticker].iloc[0]
+            precio_actual = datos["Precio Actual"]
+            strike_price = round(precio_actual * (1 + delta_strike / 100), 2)
+
+            ticker_yf = yf.Ticker(selected_ticker)
+            expiraciones = ticker_yf.options
+            if expiraciones:
+                fecha_venc = min(expiraciones, key=lambda x: abs((pd.to_datetime(x) - pd.Timestamp.today()).days - dias_a_vencimiento))
+                cadena = ticker_yf.option_chain(fecha_venc)
+                tabla_opciones = cadena.calls if tipo_opcion == "CALL" else cadena.puts
+                fila = tabla_opciones.loc[np.abs(tabla_opciones["strike"] - strike_price).idxmin()]
+                premium = (fila["bid"] + fila["ask"]) / 2
+
+                st.markdown(f"Precio actual: ${precio_actual:.2f}")
+                st.markdown(f"Strike simulado: ${strike_price}")
+                st.markdown(f"Prima estimada: ${premium:.2f}")
+                st.markdown(f"Vencimiento elegido: {fecha_venc}")
+                if "delta" in fila:
+                    st.markdown(f"📊 Probabilidad implícita (Delta): ~{abs(fila['delta']) * 100:.1f}%")
+
+                S = np.linspace(precio_actual * 0.6, precio_actual * 1.4, 100)
+                payoff = calcular_payoff_call(S, strike_price, premium) if tipo_opcion == "CALL" else calcular_payoff_put(S, strike_price, premium)
+
+                fig, ax = plt.subplots()
+                ax.plot(S, payoff, label="Payoff")
+                ax.axhline(0, color="gray", linestyle="--")
+                ax.axvline(strike_price, color="red", linestyle="--")
+                ax.set_xlabel("Precio al vencimiento")
+                ax.set_ylabel("Ganancia / Pérdida")
+                ax.set_title(f"{tipo_opcion} - {selected_ticker} ({nivel_riesgo})")
+                ax.legend()
+                st.pyplot(fig)
+            else:
+                st.warning("⚠ No se encontró cadena de opciones para este ticker.")
+
+        # Sección 3: Dashboard
+        elif seccion == "Dashboard de Desempeño":
+            try:
+                historial = pd.read_csv("registro_acciones.csv")
+                historial["Fecha"] = pd.to_datetime(historial["Fecha"])
+                tickers = historial["Ticker"].unique()
+                filtro = st.multiselect("📌 Filtrar Tickers", options=tickers, default=list(tickers))
+                df_filtrado = historial[historial["Ticker"].isin(filtro)]
+
+                st.subheader("📈 Indicadores Generales")
+                col1, col2, col3 = st.columns(3)
+                col1.metric("Total decisiones", len(df_filtrado))
+                col2.metric("% PUTs", f"{(df_filtrado['Acción Tomada'] == 'Comprar PUT').mean() * 100:.1f}%")
+                col3.metric("% Mantener", f"{(df_filtrado['Acción Tomada'] == 'Mantener').mean() * 100:.1f}%")
+
+                st.bar_chart(df_filtrado.groupby("Acción Tomada")["Rentabilidad %"].mean())
+                st.line_chart(df_filtrado.set_index("Fecha")["Rentabilidad %"])
+            except FileNotFoundError:
+                st.error("No se encontró 'registro_acciones.csv'. Ejecutá primero el gestor.")
+else:
+    st.info("Subí el archivo Excel para empezar.")
