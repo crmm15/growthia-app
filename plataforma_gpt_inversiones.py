@@ -20,7 +20,7 @@ def calcular_payoff_put(S, K, premium):
     return np.maximum(K - S, 0) - premium
 def registrar_accion(ticker, accion, rentab):
     nueva_fila = pd.DataFrame([{
-        "Fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "Fecha": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "Ticker": ticker,
         "Acción Tomada": accion,
         "Rentabilidad %": rentab
