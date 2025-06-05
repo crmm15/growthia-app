@@ -11,7 +11,7 @@ st.set_page_config(page_title="Agent GrowthIA M&M", layout="wide")
 st.title("🧠 Plataforma Integral para Gestión y Simulación de Inversiones")
 
 # Menú principal
-seccion = st.sidebar.radio("📂 Elegí una sección", ["Gestor de Portafolio", "Simulador de Opciones", "Dashboard de Desempeño"])
+seccion = st.sidebar.radio("📂 Elegí una sección", ["Inicio", "Gestor de Portafolio", "Simulador de Opciones", "Dashboard de Desempeño"])
 
 def calcular_payoff_call(S, K, premium):
     return np.maximum(S - K, 0) - premium
@@ -32,6 +32,9 @@ def registrar_accion(ticker, accion, rentab):
     else:
         historial = nueva_fila
     historial.to_csv(archivo_log, index=False)
+
+if seccion == "Inicio":
+    st.markdown(open("prompt_inicial.md", "r", encoding="utf-8").read())
 
 archivo = st.sidebar.file_uploader("📁 Subí tu archivo Excel (.xlsx)", type=["xlsx"])
 
