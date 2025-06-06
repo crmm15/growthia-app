@@ -90,28 +90,33 @@ if archivo is not None:
         # Sección 2: Simulador
         elif seccion == "Simulador de Opciones":
             st.subheader("📈 Simulador de Opciones con Perfil de Riesgo")
+
             selected_ticker = st.selectbox("Seleccioná un ticker", df["Ticker"].unique())
+            
             nivel_riesgo = st.radio(
                 "🎯 Tu perfil de riesgo",
                 ["Conservador", "Balanceado", "Agresivo"],
                 index=1,
-                help="Define la tolerancia al riesgo. Afecta cuánto margen al alza o baja se permite sobre el strike."
+                help="Define cuánto riesgo estás dispuesto a asumir. Conservador prioriza protección, Agresivo busca mayor upside."
             )
+
             tipo_opcion = st.radio(
                 "Tipo de opción",
                 ["CALL", "PUT"],
-                help="CALL = derecho a comprar. PUT = derecho a vender. Elige según tu visión de mercado."
+                help="CALL te beneficia si sube el precio. PUT protege si baja el precio."
             )
+
             sugerencia = {"Conservador": 5, "Balanceado": 10, "Agresivo": 20}
             delta_strike = st.slider(
-                "🧮 % sobre el precio actual para el strike",
+                "📉 % sobre el precio actual para el strike",
                 -30, 30, sugerencia[nivel_riesgo],
-                help="Ajustá el precio strike en relación al precio actual del activo. ±% define cuán in/out of the money está."
+                help="Determina qué tan alejado estará el strike del precio actual. Positivo para CALL, negativo para PUT."
             )
+
             dias_a_vencimiento = st.slider(
                 "📆 Días hasta vencimiento",
                 7, 90, 30,
-                help="Duración restante del contrato. Más días = más prima (valor temporal)."
+                help="Número estimado de días hasta la fecha de vencimiento de la opción."
             )
 
             datos = df[df["Ticker"] == selected_ticker].iloc[0]
@@ -120,30 +125,32 @@ if archivo is not None:
 
             ticker_yf = yf.Ticker(selected_ticker)
             expiraciones = ticker_yf.options
+
             if expiraciones:
-                fecha_venc = min(expiraciones, key=lambda x: abs((pd.to_datetime(x) - pd.Timestamp.today()).days - dias_a_vencimiento))
+                fecha_venc = min(
+                    expiraciones,
+                    key=lambda x: abs((pd.to_datetime(x) - pd.Timestamp.today()).days - dias_a_vencimiento)
+                )
+
                 cadena = ticker_yf.option_chain(fecha_venc)
                 tabla_opciones = cadena.calls if tipo_opcion == "CALL" else cadena.puts
                 fila = tabla_opciones.loc[np.abs(tabla_opciones["strike"] - strike_price).idxmin()]
                 premium = (fila["bid"] + fila["ask"]) / 2
 
-                st.markdown(f"Precio actual: ${precio_actual:.2f}")
-                st.markdown(f"Strike simulado: ${strike_price}")
-                st.markdown(f"Prima estimada: ${premium:.2f}")
-                st.markdown(f"Vencimiento elegido: {fecha_venc}")
-                if "delta" in fila:
-                    probabilidad = abs(fila['delta']) * 100
-                    st.markdown(
-                        f"📊 **Probabilidad implícita de alcanzar el strike:** ~{probabilidad:.1f}%"
-                    )
-                    st.caption(
-                        "ℹ️ Basado en el delta de la opción. Aproximación de que termine 'in-the-money' al vencimiento."
-                )
+                st.markdown(f"**Precio actual:** ${precio_actual:.2f}")
+                st.markdown(f"**Strike simulado:** ${strike_price}")
+                st.markdown(f"**Prima estimada:** ${premium:.2f}")
+                st.markdown(f"**Vencimiento elegido:** {fecha_venc}")
 
+                if "delta" in fila:
+                    prob = abs(fila["delta"]) * 100
+                    st.markdown(f"📊 **Probabilidad implícita de alcanzar el strike (Delta): ~{prob:.1f}%**")
+
+                # Simular el payoff
                 S = np.linspace(precio_actual * 0.6, precio_actual * 1.4, 100)
                 payoff = calcular_payoff_call(S, strike_price, premium) if tipo_opcion == "CALL" else calcular_payoff_put(S, strike_price, premium)
 
-                fig, ax = plt.subplots(figsize=(5, 3))
+                fig, ax = plt.subplots(figsize=(5, 3))  # Tamaño ajustado
                 ax.plot(S, payoff, label="Payoff")
                 ax.axhline(0, color="gray", linestyle="--")
                 ax.axvline(strike_price, color="red", linestyle="--")
@@ -152,6 +159,7 @@ if archivo is not None:
                 ax.set_title(f"{tipo_opcion} - {selected_ticker} ({nivel_riesgo})")
                 ax.legend()
                 st.pyplot(fig)
+
             else:
                 st.warning("⚠ No se encontró cadena de opciones para este ticker.")
 
