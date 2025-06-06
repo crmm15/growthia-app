@@ -42,6 +42,7 @@ def registrar_accion(ticker, accion, rentab):
             "parse_mode": "Markdown"
         }
         requests.get(url, params=params)
+        st.toast("📬 Notificación enviada por Telegram.")
     except Exception as e:
         st.warning("⚠ Error al enviar notificación por Telegram.")
 
@@ -50,21 +51,6 @@ def calcular_payoff_call(S, K, premium):
 
 def calcular_payoff_put(S, K, premium):
     return np.maximum(K - S, 0) - premium
-def registrar_accion(ticker, accion, rentab):
-    nueva_fila = pd.DataFrame([{
-        "Fecha": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "Ticker": ticker,
-        "Acción Tomada": accion,
-        "Rentabilidad %": rentab
-    }])
-    archivo_log = "registro_acciones.csv"
-    if os.path.exists(archivo_log):
-        historial = pd.read_csv(archivo_log)
-        historial = pd.concat([historial, nueva_fila], ignore_index=True)
-    else:
-        historial = nueva_fila
-    historial.to_csv(archivo_log, index=False)
-
 if seccion == "Inicio":
     st.markdown(open("prompt_inicial.md", "r", encoding="utf-8").read())
 
