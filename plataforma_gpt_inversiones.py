@@ -162,7 +162,10 @@ if archivo is not None:
                     if st.button(f"📋 Revisar manualmente {ticker}", key=f"revisar_{ticker}"):
                         registrar_accion(ticker, "Revisión Manual", rentab)
                         st.info(f"🔍 Acción registrada para {ticker}")
-            generar_y_enviar_resumen_telegram()
+                st.markdown("---")
+                if st.button("📤 Enviar resumen visual a Telegram"):
+                    generar_y_enviar_resumen_telegram()
+
         # Sección 2: Simulador
         elif seccion == "Simulador de Opciones":
             st.subheader("📈 Simulador de Opciones con Perfil de Riesgo")
