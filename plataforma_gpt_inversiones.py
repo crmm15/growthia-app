@@ -32,8 +32,8 @@ def registrar_accion(ticker, accion, rentab):
 
     # Enviar notificación por Telegram
     try:
-        TELEGRAM_TOKEN = "7152975161:AAGyxo7BvXbMLInF4irgQTWIyi-e--1RaBg"
-        TELEGRAM_CHAT_ID = "450905866"
+        TELEGRAM_TOKEN = st.secrets["TELEGRAM_TOKEN"]
+        TELEGRAM_CHAT_ID = st.secrets["TELEGRAM_CHAT_ID"]
         mensaje = f"📢 Acción registrada: *{accion}* para `{ticker}` con rentabilidad *{rentab:.2f}%*"
         url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
         params = {
