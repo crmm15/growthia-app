@@ -14,6 +14,63 @@ st.title("🧠 Plataforma Integral para Gestión y Simulación de Inversiones")
 # Menú principal
 seccion = st.sidebar.radio("📂 Elegí una sección", ["Inicio", "Gestor de Portafolio", "Simulador de Opciones", "Dashboard de Desempeño"])
 
+def generar_y_enviar_resumen_telegram():
+    archivo_log = "registro_acciones.csv"
+    if not os.path.exists(archivo_log):
+        print("⚠ No hay acciones registradas aún.")
+        return
+
+    df = pd.read_csv(archivo_log)
+    if df.empty:
+        print("⚠ El archivo de registro está vacío.")
+        return
+
+    # --- Procesar datos
+    resumen = df["Acción Tomada"].value_counts()
+    rentabilidad = df.groupby("Acción Tomada")["Rentabilidad %"].mean()
+
+    # --- Crear figura
+    fig, axs = plt.subplots(1, 2, figsize=(10, 4))
+    
+    # Pie chart
+    axs[0].pie(resumen, labels=resumen.index, autopct="%1.1f%%", startangle=140)
+    axs[0].set_title("Distribución de Decisiones")
+
+    # Bar chart
+    axs[1].bar(rentabilidad.index, rentabilidad.values, color="skyblue")
+    axs[1].set_title("Rentabilidad Promedio")
+    axs[1].set_ylabel("Rentabilidad %")
+    axs[1].tick_params(axis='x', rotation=15)
+
+    plt.tight_layout()
+    
+    # Guardar imagen temporal
+    nombre_archivo = f"resumen_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+    fig.savefig(nombre_archivo)
+    plt.close()
+
+    # --- Enviar por Telegram
+    try:
+        TELEGRAM_TOKEN = st.secrets["TELEGRAM_TOKEN"]
+        TELEGRAM_CHAT_ID = st.secrets["TELEGRAM_CHAT_ID"]
+
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendPhoto"
+        with open(nombre_archivo, "rb") as image:
+            files = {"photo": image}
+            data = {"chat_id": TELEGRAM_CHAT_ID, "caption": "📊 Resumen de decisiones tomadas"}
+            response = requests.post(url, data=data, files=files)
+
+        if response.status_code == 200:
+            st.toast("📈 Resumen enviado por Telegram.")
+        else:
+            st.warning("⚠ No se pudo enviar el gráfico por Telegram.")
+    except Exception as e:
+        st.warning(f"❌ Error al enviar a Telegram: {e}")
+
+    # Borrar imagen temporal (opcional)
+    os.remove(nombre_archivo)
+
+
 def registrar_accion(ticker, accion, rentab):
     nueva_fila = pd.DataFrame([{
         "Fecha": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -105,7 +162,7 @@ if archivo is not None:
                     if st.button(f"📋 Revisar manualmente {ticker}", key=f"revisar_{ticker}"):
                         registrar_accion(ticker, "Revisión Manual", rentab)
                         st.info(f"🔍 Acción registrada para {ticker}")
-
+            generar_y_enviar_resumen_telegram()
         # Sección 2: Simulador
         elif seccion == "Simulador de Opciones":
             st.subheader("📈 Simulador de Opciones con Perfil de Riesgo")
@@ -203,3 +260,7 @@ if archivo is not None:
                 st.error("No se encontró 'registro_acciones.csv'. Ejecutá primero el gestor.")
 else:
     st.info("Subí el archivo Excel para empezar.")
+
+
+
+
