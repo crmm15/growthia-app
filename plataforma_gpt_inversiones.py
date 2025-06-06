@@ -6,12 +6,27 @@ import yfinance as yf
 import matplotlib.pyplot as plt
 import datetime
 import os
+import requests  # Para enviar mensajes a Telegram
 
 st.set_page_config(page_title="Agent GrowthIA M&M", layout="wide")
 st.title("🧠 Plataforma Integral para Gestión y Simulación de Inversiones")
 
 # Menú principal
 seccion = st.sidebar.radio("📂 Elegí una sección", ["Inicio", "Gestor de Portafolio", "Simulador de Opciones", "Dashboard de Desempeño"])
+
+# Parámetros para notificación en Telegram
+TELEGRAM_TOKEN = "7152975161:AAGyxo7BvBMLInF4irgQTWIyi-e--1RaBg"  # tu token real
+TELEGRAM_CHAT_ID = "450905866"  # tu chat_id obtenido con el mensaje de prueba
+
+def enviar_telegram(mensaje):
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    data = {"chat_id": TELEGRAM_CHAT_ID, "text": mensaje}
+    try:
+        response = requests.post(url, data=data)
+        if response.status_code != 200:
+            st.warning("⚠ Error al enviar notificación por Telegram.")
+    except Exception as e:
+        st.warning(f"⚠ Excepción en notificación: {e}")
 
 def calcular_payoff_call(S, K, premium):
     return np.maximum(S - K, 0) - premium
@@ -71,20 +86,24 @@ if archivo is not None:
                     with col1:
                         if st.button(f"✅ Ejecutar PUT para {ticker}", key=f"put_{ticker}"):
                             registrar_accion(ticker, "Comprar PUT", rentab)
+                            enviar_telegram(f"🛡 Se ejecutó PUT para {ticker} con rentabilidad {rentab:.2f}%")
                             st.success(f"✔ Acción registrada para {ticker}")
                     with col2:
                         if st.button(f"❌ Ignorar recomendación para {ticker}", key=f"ignorar_{ticker}"):
                             registrar_accion(ticker, "Ignorado", rentab)
+                            enviar_telegram(f"🚫 Se ignoró recomendación para {ticker} ({rentab:.2f}%)")
                             st.info(f"🔕 Recomendación ignorada para {ticker}")
                 elif rentab > 8:
                     st.write("🔄 Recomendación: Mantener posición.")
                     if st.button(f"✅ Confirmar mantener {ticker}", key=f"mantener_{ticker}"):
                         registrar_accion(ticker, "Mantener", rentab)
+                        enviar_telegram(f"🟢 Se confirmó mantener {ticker} con rentabilidad {rentab:.2f}%")
                         st.success(f"✔ Acción registrada para {ticker}")
                 else:
                     st.write("📉 Recomendación: Revisar, baja rentabilidad.")
                     if st.button(f"📋 Revisar manualmente {ticker}", key=f"revisar_{ticker}"):
                         registrar_accion(ticker, "Revisión Manual", rentab)
+                        enviar_telegram(f"🔍 Se marcó {ticker} para revisión manual ({rentab:.2f}%)")
                         st.info(f"🔍 Acción registrada para {ticker}")
 
         # Sección 2: Simulador
