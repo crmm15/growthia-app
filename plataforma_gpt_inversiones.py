@@ -143,7 +143,7 @@ if archivo is not None:
                 S = np.linspace(precio_actual * 0.6, precio_actual * 1.4, 100)
                 payoff = calcular_payoff_call(S, strike_price, premium) if tipo_opcion == "CALL" else calcular_payoff_put(S, strike_price, premium)
 
-                fig, ax = plt.subplots()
+                fig, ax = plt.subplots(figsize=(5, 3))
                 ax.plot(S, payoff, label="Payoff")
                 ax.axhline(0, color="gray", linestyle="--")
                 ax.axvline(strike_price, color="red", linestyle="--")
