@@ -14,11 +14,6 @@ st.title("🧠 Plataforma Integral para Gestión y Simulación de Inversiones")
 # Menú principal
 seccion = st.sidebar.radio("📂 Elegí una sección", ["Inicio", "Gestor de Portafolio", "Simulador de Opciones", "Dashboard de Desempeño"])
 
-# Parámetros para notificación en Telegram
-# Configuración de Telegram
-TELEGRAM_TOKEN = "7152975161:AAGyxo7BvXbMLInF4irgQTWIyi-e--1RaBg"
-TELEGRAM_CHAT_ID = "450905866"
-
 def registrar_accion(ticker, accion, rentab):
     nueva_fila = pd.DataFrame([{
         "Fecha": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -26,6 +21,7 @@ def registrar_accion(ticker, accion, rentab):
         "Acción Tomada": accion,
         "Rentabilidad %": rentab
     }])
+
     archivo_log = "registro_acciones.csv"
     if os.path.exists(archivo_log):
         historial = pd.read_csv(archivo_log)
@@ -34,19 +30,18 @@ def registrar_accion(ticker, accion, rentab):
         historial = nueva_fila
     historial.to_csv(archivo_log, index=False)
 
-    # Enviar alerta por Telegram
+    # Enviar notificación por Telegram
     try:
-        mensaje = (
-            f"📢 *Nueva Acción Registrada*\n"
-            f"📈 Ticker: `{ticker}`\n"
-            f"🎯 Acción: *{accion}*\n"
-            f"💹 Rentabilidad: `{rentab:.2f}%`\n"
-            f"🕒 {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-        )
+        TELEGRAM_TOKEN = "7152975161:AAGyxo7BvXbMLInF4irgQTWIyi-e--1RaBg"
+        TELEGRAM_CHAT_ID = "450905866"
+        mensaje = f"📢 Acción registrada: *{accion}* para `{ticker}` con rentabilidad *{rentab:.2f}%*"
         url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-        params = {"chat_id": TELEGRAM_CHAT_ID, "text": mensaje, "parse_mode": "Markdown"}
-        response = requests.get(url, params=params)
-        response.raise_for_status()
+        params = {
+            "chat_id": TELEGRAM_CHAT_ID,
+            "text": mensaje,
+            "parse_mode": "Markdown"
+        }
+        requests.get(url, params=params)
     except Exception as e:
         st.warning("⚠ Error al enviar notificación por Telegram.")
 
@@ -108,24 +103,21 @@ if archivo is not None:
                     with col1:
                         if st.button(f"✅ Ejecutar PUT para {ticker}", key=f"put_{ticker}"):
                             registrar_accion(ticker, "Comprar PUT", rentab)
-                            enviar_telegram(f"🛡 Se ejecutó PUT para {ticker} con rentabilidad {rentab:.2f}%")
                             st.success(f"✔ Acción registrada para {ticker}")
                     with col2:
                         if st.button(f"❌ Ignorar recomendación para {ticker}", key=f"ignorar_{ticker}"):
                             registrar_accion(ticker, "Ignorado", rentab)
-                            enviar_telegram(f"🚫 Se ignoró recomendación para {ticker} ({rentab:.2f}%)")
                             st.info(f"🔕 Recomendación ignorada para {ticker}")
                 elif rentab > 8:
                     st.write("🔄 Recomendación: Mantener posición.")
                     if st.button(f"✅ Confirmar mantener {ticker}", key=f"mantener_{ticker}"):
                         registrar_accion(ticker, "Mantener", rentab)
-                        enviar_telegram(f"🟢 Se confirmó mantener {ticker} con rentabilidad {rentab:.2f}%")
+
                         st.success(f"✔ Acción registrada para {ticker}")
                 else:
                     st.write("📉 Recomendación: Revisar, baja rentabilidad.")
                     if st.button(f"📋 Revisar manualmente {ticker}", key=f"revisar_{ticker}"):
                         registrar_accion(ticker, "Revisión Manual", rentab)
-                        enviar_telegram(f"🔍 Se marcó {ticker} para revisión manual ({rentab:.2f}%)")
                         st.info(f"🔍 Acción registrada para {ticker}")
 
         # Sección 2: Simulador
