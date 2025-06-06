@@ -162,8 +162,9 @@ if archivo is not None:
                     if st.button(f"📋 Revisar manualmente {ticker}", key=f"revisar_{ticker}"):
                         registrar_accion(ticker, "Revisión Manual", rentab)
                         st.info(f"🔍 Acción registrada para {ticker}")
-                st.markdown("---")
-                if st.button("📤 Enviar resumen visual a Telegram"):
+                
+            st.markdown("---")
+            if st.button("📤 Enviar resumen visual a Telegram", key="resumen_telegram"):
                     generar_y_enviar_resumen_telegram()
 
         # Sección 2: Simulador
