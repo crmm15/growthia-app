@@ -91,11 +91,28 @@ if archivo is not None:
         elif seccion == "Simulador de Opciones":
             st.subheader("📈 Simulador de Opciones con Perfil de Riesgo")
             selected_ticker = st.selectbox("Seleccioná un ticker", df["Ticker"].unique())
-            nivel_riesgo = st.radio("🎯 Tu perfil de riesgo", ["Conservador", "Balanceado", "Agresivo"], index=1)
-            tipo_opcion = st.radio("Tipo de opción", ["CALL", "PUT"])
+            nivel_riesgo = st.radio(
+                "🎯 Tu perfil de riesgo",
+                ["Conservador", "Balanceado", "Agresivo"],
+                index=1,
+                help="Define la tolerancia al riesgo. Afecta cuánto margen al alza o baja se permite sobre el strike."
+            )
+            tipo_opcion = st.radio(
+                "Tipo de opción",∫
+                ["CALL", "PUT"],
+                help="CALL = derecho a comprar. PUT = derecho a vender. Elige según tu visión de mercado."
+            )
             sugerencia = {"Conservador": 5, "Balanceado": 10, "Agresivo": 20}
-            delta_strike = st.slider("🧮 % sobre el precio actual para el strike", -30, 30, sugerencia[nivel_riesgo])
-            dias_a_vencimiento = st.slider("📆 Días hasta vencimiento", 7, 90, 30)
+            delta_strike = st.slider(
+                "🧮 % sobre el precio actual para el strike",
+                -30, 30, sugerencia[nivel_riesgo],
+                help="Ajustá el precio strike en relación al precio actual del activo. ±% define cuán in/out of the money está."
+            )
+            dias_a_vencimiento = st.slider(
+                "📆 Días hasta vencimiento",
+                7, 90, 30,
+                help="Duración restante del contrato. Más días = más prima (valor temporal)."
+            )
 
             datos = df[df["Ticker"] == selected_ticker].iloc[0]
             precio_actual = datos["Precio Actual"]
