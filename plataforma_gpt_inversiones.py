@@ -98,7 +98,7 @@ if archivo is not None:
                 help="Define la tolerancia al riesgo. Afecta cuánto margen al alza o baja se permite sobre el strike."
             )
             tipo_opcion = st.radio(
-                "Tipo de opción",∫
+                "Tipo de opción",
                 ["CALL", "PUT"],
                 help="CALL = derecho a comprar. PUT = derecho a vender. Elige según tu visión de mercado."
             )
