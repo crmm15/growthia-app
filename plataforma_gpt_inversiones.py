@@ -115,7 +115,13 @@ if archivo is not None:
                 st.markdown(f"Prima estimada: ${premium:.2f}")
                 st.markdown(f"Vencimiento elegido: {fecha_venc}")
                 if "delta" in fila:
-                    st.markdown(f"📊 Probabilidad implícita (Delta): ~{abs(fila['delta']) * 100:.1f}%")
+                    probabilidad = abs(fila['delta']) * 100
+                    st.markdown(
+                        f"📊 **Probabilidad implícita de alcanzar el strike:** ~{probabilidad:.1f}%"
+                    )
+                    st.caption(
+                        "ℹ️ Basado en el delta de la opción. Aproximación de que termine 'in-the-money' al vencimiento."
+                )
 
                 S = np.linspace(precio_actual * 0.6, precio_actual * 1.4, 100)
                 payoff = calcular_payoff_call(S, strike_price, premium) if tipo_opcion == "CALL" else calcular_payoff_put(S, strike_price, premium)
