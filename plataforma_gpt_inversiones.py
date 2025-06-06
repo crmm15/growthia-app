@@ -15,18 +15,40 @@ st.title("🧠 Plataforma Integral para Gestión y Simulación de Inversiones")
 seccion = st.sidebar.radio("📂 Elegí una sección", ["Inicio", "Gestor de Portafolio", "Simulador de Opciones", "Dashboard de Desempeño"])
 
 # Parámetros para notificación en Telegram
-TELEGRAM_TOKEN = "7152975161:AAGyxo7BvBMLInF4irgQTWIyi-e--1RaBg"  # tu token real
-TELEGRAM_CHAT_ID = "450905866"  # tu chat_id obtenido con el mensaje de prueba
+# Configuración de Telegram
+TELEGRAM_TOKEN = "7152975161:AAGyxo7BvXbMLInF4irgQTWIyi-e--1RaBg"
+TELEGRAM_CHAT_ID = "450905866"
 
-def enviar_telegram(mensaje):
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-    data = {"chat_id": TELEGRAM_CHAT_ID, "text": mensaje}
+def registrar_accion(ticker, accion, rentab):
+    nueva_fila = pd.DataFrame([{
+        "Fecha": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "Ticker": ticker,
+        "Acción Tomada": accion,
+        "Rentabilidad %": rentab
+    }])
+    archivo_log = "registro_acciones.csv"
+    if os.path.exists(archivo_log):
+        historial = pd.read_csv(archivo_log)
+        historial = pd.concat([historial, nueva_fila], ignore_index=True)
+    else:
+        historial = nueva_fila
+    historial.to_csv(archivo_log, index=False)
+
+    # Enviar alerta por Telegram
     try:
-        response = requests.post(url, data=data)
-        if response.status_code != 200:
-            st.warning("⚠ Error al enviar notificación por Telegram.")
+        mensaje = (
+            f"📢 *Nueva Acción Registrada*\n"
+            f"📈 Ticker: `{ticker}`\n"
+            f"🎯 Acción: *{accion}*\n"
+            f"💹 Rentabilidad: `{rentab:.2f}%`\n"
+            f"🕒 {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        )
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+        params = {"chat_id": TELEGRAM_CHAT_ID, "text": mensaje, "parse_mode": "Markdown"}
+        response = requests.get(url, params=params)
+        response.raise_for_status()
     except Exception as e:
-        st.warning(f"⚠ Excepción en notificación: {e}")
+        st.warning("⚠ Error al enviar notificación por Telegram.")
 
 def calcular_payoff_call(S, K, premium):
     return np.maximum(S - K, 0) - premium
