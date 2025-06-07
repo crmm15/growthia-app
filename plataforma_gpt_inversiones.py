@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
 import datetime
 import os
 import requests  # Para enviar mensajes a Telegram
@@ -192,7 +193,7 @@ if archivo is not None:
             if st.button("📤 Enviar resumen visual a Telegram", key="resumen_telegram"):
                     generar_y_enviar_resumen_telegram()
 
-        # Sección 2: Simulador
+        # Dentro del bloque: if seccion == "Simulador de Opciones":
         elif seccion == "Simulador de Opciones":
             st.subheader("📈 Simulador de Opciones con Perfil de Riesgo")
 
@@ -201,28 +202,14 @@ if archivo is not None:
             nivel_riesgo = st.radio(
                 "🎯 Tu perfil de riesgo",
                 ["Conservador", "Balanceado", "Agresivo"],
-                index=1,
-                help="Define cuánto riesgo estás dispuesto a asumir. Conservador prioriza protección, Agresivo busca mayor upside."
+                index=1
             )
 
-            tipo_opcion = st.radio(
-                "Tipo de opción",
-                ["CALL", "PUT"],
-                help="CALL te beneficia si sube el precio. PUT protege si baja el precio."
-            )
+            tipo_opcion = st.radio("Tipo de opción", ["CALL", "PUT"])
 
             sugerencia = {"Conservador": 5, "Balanceado": 10, "Agresivo": 20}
-            delta_strike = st.slider(
-                "📉 % sobre el precio actual para el strike",
-                -50, 50, sugerencia[nivel_riesgo],
-                help="Determina qué tan alejado estará el strike del precio actual. Positivo para CALL, negativo para PUT."
-            )
-
-            dias_a_vencimiento = st.slider(
-                "📆 Días hasta vencimiento",
-                7, 90, 30,
-                help="Número estimado de días hasta la fecha de vencimiento de la opción."
-            )
+            delta_strike = st.slider("📉 % sobre el precio actual para el strike", -50, 50, sugerencia[nivel_riesgo])
+            dias_a_vencimiento = st.slider("📆 Días hasta vencimiento", 7, 90, 30)
 
             datos = df[df["Ticker"] == selected_ticker].iloc[0]
             precio_actual = datos["Precio Actual"]
@@ -251,42 +238,61 @@ if archivo is not None:
                 st.markdown(f"**Prima estimada:** ${premium:.2f}")
                 st.markdown(f"**Vencimiento elegido:** {fecha_venc}")
 
+                # Break-even
+                break_even = strike_price + premium if tipo_opcion == "CALL" else strike_price - premium
+                st.markdown(f"📍 **Punto de equilibrio estimado:** ${break_even:.2f}")
+
+                # Delta (probabilidad)
                 try:
-                    # Si está disponible el delta real del mercado, usalo:
                     if "delta" in fila and not pd.isna(fila["delta"]):
                         delta = fila["delta"]
                     else:
-                        T = dias_a_vencimiento / 365  # en años
-                        r = 0.02  # tasa libre de riesgo
-                        # Usá volatilidad implícita si está disponible, si no una estimada
+                        T = dias_a_vencimiento / 365
+                        r = 0.02
                         sigma = fila.get("impliedVolatility", 0.25)
                         delta = calcular_delta_call_put(precio_actual, strike_price, T, r, sigma, tipo_opcion)
-                    
                     if delta is not None:
                         prob = abs(delta) * 100
-                        st.markdown(f"**Probabilidad estimada de que se ejecute la opción (Delta): ~{prob:.1f}%**")
-                    else:
-                        st.warning("⚠ No se pudo calcular el delta estimado.")
-                except Exception as e:
-                    st.warning("⚠ Error al calcular el delta.")
+                        st.markdown(f"📊 **Probabilidad estimada de ejecución (Delta): ~{prob:.1f}%**")
+                except:
+                    st.warning("⚠ No se pudo estimar el delta.")
 
-
-                # Simular el payoff
+                # Simulación de payoff
                 S = np.linspace(precio_actual * 0.6, precio_actual * 1.4, 100)
                 payoff = calcular_payoff_call(S, strike_price, premium) if tipo_opcion == "CALL" else calcular_payoff_put(S, strike_price, premium)
 
-                fig, ax = plt.subplots(figsize=(5, 3))  # Tamaño ajustado
+                # Rentabilidad máxima sobre prima
+                max_payoff = np.max(payoff)
+                if premium > 0:
+                    rentab_pct = (max_payoff / premium) * 100
+                    st.markdown(f"💰 **Rentabilidad máxima estimada sobre prima: ~{rentab_pct:.1f}%**")
+
+                fig, ax = plt.subplots(figsize=(6, 4))
                 ax.plot(S, payoff, label="Payoff")
                 ax.axhline(0, color="gray", linestyle="--")
-                ax.axvline(strike_price, color="red", linestyle="--")
-                ax.set_xlabel("Precio al vencimiento")
-                ax.set_ylabel("Ganancia / Pérdida")
+                ax.axvline(strike_price, color="red", linestyle="--", label="Strike")
+                ax.axvline(break_even, color="green", linestyle="--", label="Break-even")
+                ax.set_xlabel("Precio del activo al vencimiento (USD)")
+                ax.set_ylabel("Resultado neto (USD)")
                 ax.set_title(f"{tipo_opcion} - {selected_ticker} ({nivel_riesgo})")
                 ax.legend()
+                ax.xaxis.set_major_formatter(mtick.StrMethodFormatter('${x:,.0f}'))
+                ax.yaxis.set_major_formatter(mtick.StrMethodFormatter('${x:,.0f}'))
                 st.pyplot(fig)
 
-            else:
-                st.warning("⚠ No se encontró cadena de opciones para este ticker.")
+                # Botón para enviar a Telegram
+                if st.button("📤 Enviar esta simulación a Telegram"):
+                    enviar_grafico_simulacion_telegram(fig, selected_ticker)
+
+                # Explicación visual
+                with st.expander("ℹ️ Interpretación del gráfico"):
+                    st.markdown(f"""
+                    - 🔴 **Strike:** Precio objetivo de ejercicio: ${strike_price}
+                    - 🟢 **Break-even:** Precio donde comenzás a ganar: ${break_even:.2f}
+                    - ❌ Si el precio final está por debajo del break-even, tenés pérdida neta (limitada a la prima).
+                    - ✅ Si el precio supera el break-even, entrás en ganancia neta.
+                    - 📊 El gráfico representa el perfil de ganancia/pérdida de una opción **{tipo_opcion}** con perfil **{nivel_riesgo}**.
+                    """)
 
         # Sección 3: Dashboard
         elif seccion == "Dashboard de Desempeño":
