@@ -13,22 +13,27 @@ st.title("🧠 Plataforma Integral para Gestión y Simulación de Inversiones")
 
 from scipy.stats import norm
 
+from scipy.stats import norm
+import math
+
 def calcular_delta_call_put(S, K, T, r, sigma, tipo="CALL"):
     """
-    Estima el delta de una opción usando el modelo Black-Scholes.
-    
-    - S: precio actual del activo
-    - K: precio de ejercicio
-    - T: tiempo a vencimiento en años
-    - r: tasa libre de riesgo (usamos 2% anual por defecto)
-    - sigma: volatilidad (estimada o fija, e.g. 25%)
-    - tipo: "CALL" o "PUT"
+    Calcula el delta de una opción usando Black-Scholes.
+    S = precio actual del activo
+    K = precio de ejercicio (strike)
+    T = tiempo hasta vencimiento (en años)
+    r = tasa libre de riesgo (anual)
+    sigma = volatilidad (anual)
+    tipo = "CALL" o "PUT"
     """
-    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
-    if tipo == "CALL":
-        return norm.cdf(d1)
-    else:
-        return -norm.cdf(-d1)
+    try:
+        d1 = (math.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * math.sqrt(T))
+        if tipo.upper() == "CALL":
+            return norm.cdf(d1)
+        else:  # PUT
+            return norm.cdf(d1) - 1
+    except Exception as e:
+        return None
 
 
 # Menú principal
@@ -247,18 +252,24 @@ if archivo is not None:
                 st.markdown(f"**Vencimiento elegido:** {fecha_venc}")
 
                 try:
-                    if "delta" in fila:
+                    # Si está disponible el delta real del mercado, usalo:
+                    if "delta" in fila and not pd.isna(fila["delta"]):
                         delta = fila["delta"]
                     else:
                         T = dias_a_vencimiento / 365  # en años
-                        r = 0.02  # tasa libre de riesgo 2%
-                        sigma = 0.25  # volatilidad supuesta del 25%
+                        r = 0.02  # tasa libre de riesgo
+                        # Usá volatilidad implícita si está disponible, si no una estimada
+                        sigma = fila.get("impliedVolatility", 0.25)
                         delta = calcular_delta_call_put(precio_actual, strike_price, T, r, sigma, tipo_opcion)
                     
-                    prob = abs(delta) * 100
-                    st.markdown(f"📊 **Probabilidad estimada de que se ejecute la opción (Delta): ~{prob:.1f}%**")
+                    if delta is not None:
+                        prob = abs(delta) * 100
+                        st.markdown(f"📊 **Probabilidad estimada de que se ejecute la opción (Delta): ~{prob:.1f}%**")
+                    else:
+                        st.warning("⚠ No se pudo calcular el delta estimado.")
                 except Exception as e:
-                    st.warning("⚠ No se pudo calcular el delta estimado.")
+                    st.warning("⚠ Error al calcular el delta.")
+
 
                 # Simular el payoff
                 S = np.linspace(precio_actual * 0.6, precio_actual * 1.4, 100)
