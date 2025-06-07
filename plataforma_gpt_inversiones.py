@@ -334,8 +334,8 @@ if archivo is not None:
                     if rol == "Comprador" and tipo_opcion == "CALL":
                         st.markdown(f"""
                 - 🎯 Comprás el derecho a comprar la acción a ${strike_price} pagando una prima de ${premium:.2f}.
-                - 📉 Si el precio final está **por debajo del strike**, **no ejercés** y perdés solo la prima.
-                - 📈 Si el precio sube **por encima de ${break_even:.2f}**, tenés ganancias netas.
+                - 📉 Si el precio final está **por debajo del strike**, **no ejercés** y pierdes solo la prima.
+                - 📈 Si el precio sube **por encima de ${break_even:.2f}**, tienes ganancias netas.
                 - ⚖️ El gráfico muestra tu rentabilidad según el precio al vencimiento.
                 """)
                     elif rol == "Comprador" and tipo_opcion == "PUT":
@@ -347,16 +347,16 @@ if archivo is not None:
                 """)
                     elif rol == "Vendedor" and tipo_opcion == "CALL":
                         st.markdown(f"""
-                - 💰 Vendés la opción y recibís ${premium:.2f}, pero asumís la obligación de vender a ${strike_price}.
+                - 💰 Vendés la opción y recibes ${premium:.2f}, pero asumes la obligación de vender a ${strike_price}.
                 - ✅ Si la acción cierra por debajo del strike, ganás toda la prima.
-                - ⚠️ Si sube **por encima de ${break_even:.2f}**, comenzás a perder dinero.
+                - ⚠️ Si sube **por encima de ${break_even:.2f}**, comienzas a perder dinero.
                 - 📉 Riesgo ilimitado si el precio sube mucho (a menos que tengas las acciones).
                 """)
                     elif rol == "Vendedor" and tipo_opcion == "PUT":
                         st.markdown(f"""
                 - 💰 Vendés la opción y te pagan ${premium:.2f} por asumir la obligación de comprar a ${strike_price}.
                 - ✅ Ganás la prima si el precio se mantiene por encima del strike.
-                - ⚠️ Si cae **por debajo de ${break_even:.2f}**, comenzás a perder dinero.
+                - ⚠️ Si cae **por debajo de ${break_even:.2f}**, comienzas a perder dinero.
                 - 📉 Riesgo limitado: como máximo hasta que la acción llegue a $0.
                 """)
 
@@ -370,16 +370,16 @@ if archivo is not None:
                     else:
                         if tipo_opcion == "CALL":
                             st.markdown(f"""
-                - 💵 Recibís una prima (${premium:.2f}) por asumir la obligación de vender a ${strike_price}.
+                - 💵 Recibes una prima (${premium:.2f}) por asumir la obligación de vender a ${strike_price}.
                 - ✅ Ganancia máxima: la prima si la acción no supera el strike.
-                - ⚠️ Si el precio sube por encima de ${break_even:.2f}, comenzás a tener pérdidas. Estas son potencialmente ilimitadas.
+                - ⚠️ Si el precio sube por encima de ${break_even:.2f}, comienzas a tener pérdidas. Estas son potencialmente ilimitadas.
                 - 🔒 Estrategia útil para generar ingresos si creés que la acción no superará el strike.
                 """)
                         else:  # PUT vendedor
                             st.markdown(f"""
-                - 💵 Recibís una prima (${premium:.2f}) por asumir la obligación de comprar a ${strike_price}.
+                - 💵 Recibes una prima (${premium:.2f}) por asumir la obligación de comprar a ${strike_price}.
                 - ✅ Ganancia máxima: la prima si la acción se mantiene por encima del strike.
-                - ⚠️ Si la acción cae por debajo de ${break_even:.2f}, empezás a tener pérdidas. El riesgo es alto, pero finito (hasta que la acción llegue a $0).
+                - ⚠️ Si la acción cae por debajo de ${break_even:.2f}, empienzas a tener pérdidas. El riesgo es alto, pero finito (hasta que la acción llegue a $0).
                 - 🛡 Estrategia usada si estás dispuesto a comprar la acción más barata que hoy.
                 """)
 
