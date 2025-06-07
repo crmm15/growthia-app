@@ -11,6 +11,26 @@ import requests  # Para enviar mensajes a Telegram
 st.set_page_config(page_title="Agent GrowthIA M&M", layout="wide")
 st.title("🧠 Plataforma Integral para Gestión y Simulación de Inversiones")
 
+from scipy.stats import norm
+
+def calcular_delta_call_put(S, K, T, r, sigma, tipo="CALL"):
+    """
+    Estima el delta de una opción usando el modelo Black-Scholes.
+    
+    - S: precio actual del activo
+    - K: precio de ejercicio
+    - T: tiempo a vencimiento en años
+    - r: tasa libre de riesgo (usamos 2% anual por defecto)
+    - sigma: volatilidad (estimada o fija, e.g. 25%)
+    - tipo: "CALL" o "PUT"
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    if tipo == "CALL":
+        return norm.cdf(d1)
+    else:
+        return -norm.cdf(-d1)
+
+
 # Menú principal
 seccion = st.sidebar.radio("📂 Elegí una sección", ["Inicio", "Gestor de Portafolio", "Simulador de Opciones", "Dashboard de Desempeño"])
 
@@ -214,17 +234,31 @@ if archivo is not None:
 
                 cadena = ticker_yf.option_chain(fecha_venc)
                 tabla_opciones = cadena.calls if tipo_opcion == "CALL" else cadena.puts
-                fila = tabla_opciones.loc[np.abs(tabla_opciones["strike"] - strike_price).idxmin()]
-                premium = (fila["bid"] + fila["ask"]) / 2
+                tabla_opciones = tabla_opciones.dropna(subset=["bid", "ask"])
+                if tabla_opciones.empty:
+                    st.warning("⚠ No hay opciones válidas para ese strike.")
+                else:
+                    fila = tabla_opciones.loc[np.abs(tabla_opciones["strike"] - strike_price).idxmin()]
+                    premium = (fila["bid"] + fila["ask"]) / 2
 
                 st.markdown(f"**Precio actual:** ${precio_actual:.2f}")
                 st.markdown(f"**Strike simulado:** ${strike_price}")
                 st.markdown(f"**Prima estimada:** ${premium:.2f}")
                 st.markdown(f"**Vencimiento elegido:** {fecha_venc}")
 
-                if "delta" in fila:
-                    prob = abs(fila["delta"]) * 100
-                    st.markdown(f"📊 **Probabilidad implícita de alcanzar el strike (Delta): ~{prob:.1f}%**")
+                try:
+                    if "delta" in fila:
+                        delta = fila["delta"]
+                    else:
+                        T = dias_a_vencimiento / 365  # en años
+                        r = 0.02  # tasa libre de riesgo 2%
+                        sigma = 0.25  # volatilidad supuesta del 25%
+                        delta = calcular_delta_call_put(precio_actual, strike_price, T, r, sigma, tipo_opcion)
+                    
+                    prob = abs(delta) * 100
+                    st.markdown(f"📊 **Probabilidad estimada de que se ejecute la opción (Delta): ~{prob:.1f}%**")
+                except Exception as e:
+                    st.warning("⚠ No se pudo calcular el delta estimado.")
 
                 # Simular el payoff
                 S = np.linspace(precio_actual * 0.6, precio_actual * 1.4, 100)
