@@ -220,7 +220,7 @@ if archivo is not None:
                     generar_y_enviar_resumen_telegram()
 
         # Sección 2: Simulador de Opciones
-                elif seccion == "Simulador de Opciones":
+        elif seccion == "Simulador de Opciones":
             st.subheader("📈 Simulador de Opciones con Perfil de Riesgo")
 
             selected_ticker = st.selectbox("Seleccioná un ticker", df["Ticker"].unique())
