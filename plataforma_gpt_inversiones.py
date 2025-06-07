@@ -189,7 +189,7 @@ if archivo is not None:
             sugerencia = {"Conservador": 5, "Balanceado": 10, "Agresivo": 20}
             delta_strike = st.slider(
                 "📉 % sobre el precio actual para el strike",
-                -30, 30, sugerencia[nivel_riesgo],
+                -50, 50, sugerencia[nivel_riesgo],
                 help="Determina qué tan alejado estará el strike del precio actual. Positivo para CALL, negativo para PUT."
             )
 
@@ -264,6 +264,14 @@ if archivo is not None:
                 st.error("No se encontró 'registro_acciones.csv'. Ejecutá primero el gestor.")
 else:
     st.info("Subí el archivo Excel para empezar.")
+
+# --- Envío automático del resumen diario por Telegram a las 23hs ---
+# from datetime import datetime
+# ahora = datetime.now()
+# if ahora.hour == 23 and ahora.minute < 5:
+#     generar_y_enviar_resumen_telegram()
+#     st.toast("📤 Resumen diario enviado automáticamente.")
+
 
 
 
