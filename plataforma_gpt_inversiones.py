@@ -240,7 +240,7 @@ if archivo is not None:
 
                 # Break-even
                 break_even = strike_price + premium if tipo_opcion == "CALL" else strike_price - premium
-                st.markdown(f"📍 **Punto de equilibrio estimado:** ${break_even:.2f}")
+                st.markdown(f"**Punto de equilibrio estimado:** ${break_even:.2f}")
 
                 # Delta (probabilidad)
                 try:
@@ -253,7 +253,7 @@ if archivo is not None:
                         delta = calcular_delta_call_put(precio_actual, strike_price, T, r, sigma, tipo_opcion)
                     if delta is not None:
                         prob = abs(delta) * 100
-                        st.markdown(f"📊 **Probabilidad estimada de ejecución (Delta): ~{prob:.1f}%**")
+                        st.markdown(f"**Probabilidad estimada de ejecución (Delta): ~{prob:.1f}%**")
                 except:
                     st.warning("⚠ No se pudo estimar el delta.")
 
@@ -265,7 +265,7 @@ if archivo is not None:
                 max_payoff = np.max(payoff)
                 if premium > 0:
                     rentab_pct = (max_payoff / premium) * 100
-                    st.markdown(f"💰 **Rentabilidad máxima estimada sobre prima: ~{rentab_pct:.1f}%**")
+                    st.markdown(f"**Rentabilidad máxima estimada sobre prima: ~{rentab_pct:.1f}%**")
 
                 fig, ax = plt.subplots(figsize=(6, 4))
                 ax.plot(S, payoff, label="Payoff")
