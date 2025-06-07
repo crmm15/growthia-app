@@ -264,7 +264,7 @@ if archivo is not None:
                     
                     if delta is not None:
                         prob = abs(delta) * 100
-                        st.markdown(f"📊 **Probabilidad estimada de que se ejecute la opción (Delta): ~{prob:.1f}%**")
+                        st.markdown(f"**Probabilidad estimada de que se ejecute la opción (Delta): ~{prob:.1f}%**")
                     else:
                         st.warning("⚠ No se pudo calcular el delta estimado.")
                 except Exception as e:
