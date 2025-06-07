@@ -311,7 +311,7 @@ if archivo is not None:
                 max_payoff = np.max(payoff)
                 if premium > 0 and rol == "Comprador":
                     rentabilidad_pct = (max_payoff / premium) * 100
-                    st.markdown(f"💰 **Rentabilidad máxima estimada sobre la prima invertida: ~{rentabilidad_pct:.1f}%**")
+                    st.markdown(f"**Rentabilidad máxima estimada sobre la prima invertida: ~{rentabilidad_pct:.1f}%**")
 
                 break_even = strike_price + premium if tipo_opcion == "CALL" else strike_price - premium
                 if rol == "Vendedor":
@@ -330,31 +330,33 @@ if archivo is not None:
                 ax.legend()
                 st.pyplot(fig)
 
-                st.markdown(f"📍 **Punto de equilibrio estimado:** ${break_even:.2f}")
-
                 with st.expander("ℹ️ Interpretación del gráfico"):
                     st.markdown(f"""
-        **Para rol: {rol}**
-        - 📉 Si el precio de la acción al vencimiento está **por debajo del strike**, la opción puede no ejercerse.
-        - ⚖️ El **punto de equilibrio** es: **${break_even:.2f}**.
-        - 📈 El gráfico muestra cómo varía tu ganancia/pérdida dependiendo del precio final.
-                    """)
+                    **Para rol: {rol}**
+                    - 📉 Si el precio de la acción al vencimiento está **por debajo del strike**, la opción puede no ejercerse.
+                    - ⚖️ El **punto de equilibrio** es: **${break_even:.2f}**.
+                    - 📈 El gráfico muestra cómo varía tu ganancia/pérdida dependiendo del precio final.
+                                """)
 
-                with st.expander("📘 Perfil del rol seleccionado"):
-                    if rol == "Comprador":
-                        st.markdown("""
-        - 💸 Pagás una prima por el derecho a ejercer.
-        - 📈 Ganancia potencial ilimitada (CALL) o limitada (PUT).
-        - 🔻 Pérdida máxima: la prima.
-        """)
-                    else:
-                        st.markdown("""
-        - 💵 Cobrás una prima al asumir la obligación.
-        - ⚠️ Riesgo potencial alto si el mercado se mueve en tu contra.
-        - ✅ Ganancia máxima: la prima recibida.
-        """)
-            else:
-                st.warning("⚠ No se encontró cadena de opciones para este ticker.")
+                            with st.expander("📘 Perfil del rol seleccionado"):
+                                if rol == "Comprador":
+                                    st.markdown("""
+                    - 💸 Pagás una prima por el derecho a ejercer.
+                    - 📈 Ganancia potencial ilimitada (CALL) o limitada (PUT).
+                    - 🔻 Pérdida máxima: la prima.
+                    """)
+                                else:
+                                    st.markdown("""
+                    - 💵 Cobrás una prima al asumir la obligación.
+                    - ⚠️ Riesgo potencial alto si el mercado se mueve en tu contra.
+                    - ✅ Ganancia máxima: la prima recibida.
+                    """)
+                        else:
+                            st.warning("⚠ No se encontró cadena de opciones para este ticker.")
+
+                 # Botón para enviar a Telegram
+                if st.button("📤 Enviar esta simulación a Telegram"):
+                    enviar_grafico_simulacion_telegram(fig, selected_ticker)
 
         # Sección 3: Dashboard
         elif seccion == "Dashboard de Desempeño":
