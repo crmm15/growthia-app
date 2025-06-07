@@ -332,25 +332,25 @@ if archivo is not None:
 
                 with st.expander("ℹ️ Interpretación del gráfico"):
                     st.markdown(f"""
-                    **Para rol: {rol}**
-                    - 📉 Si el precio de la acción al vencimiento está **por debajo del strike**, la opción puede no ejercerse.
-                    - ⚖️ El **punto de equilibrio** es: **${break_even:.2f}**.
-                    - 📈 El gráfico muestra cómo varía tu ganancia/pérdida dependiendo del precio final.
-                                        """)
+**Para rol: {rol}**
+- 📉 Si el precio de la acción al vencimiento está **por debajo del strike**, la opción puede no ejercerse.
+- ⚖️ El **punto de equilibrio** es: **${break_even:.2f}**.
+- 📈 El gráfico muestra cómo varía tu ganancia/pérdida dependiendo del precio final.
+                    """)
 
-                                    with st.expander("📘 Perfil del rol seleccionado"):
-                                        if rol == "Comprador":
-                                            st.markdown("""
-                    - 💸 Pagás una prima por el derecho a ejercer.
-                    - 📈 Ganancia potencial ilimitada (CALL) o limitada (PUT).
-                    - 🔻 Pérdida máxima: la prima.
-                                            """)
-                                        else:
-                                            st.markdown("""
-                    - 💵 Cobrás una prima al asumir la obligación.
-                    - ⚠️ Riesgo potencial alto si el mercado se mueve en tu contra.
-                    - ✅ Ganancia máxima: la prima recibida.
-                                            """)
+                with st.expander("📘 Perfil del rol seleccionado"):
+                    if rol == "Comprador":
+                        st.markdown("""
+- 💸 Pagás una prima por el derecho a ejercer.
+- 📈 Ganancia potencial ilimitada (CALL) o limitada (PUT).
+- 🔻 Pérdida máxima: la prima.
+                        """)
+                    else:
+                        st.markdown("""
+- 💵 Cobrás una prima al asumir la obligación.
+- ⚠️ Riesgo potencial alto si el mercado se mueve en tu contra.
+- ✅ Ganancia máxima: la prima recibida.
+                        """)
 
                 if st.button("📤 Enviar esta simulación a Telegram"):
                     enviar_grafico_simulacion_telegram(fig, selected_ticker)
