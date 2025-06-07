@@ -96,6 +96,32 @@ def generar_y_enviar_resumen_telegram():
     # Borrar imagen temporal (opcional)
     os.remove(nombre_archivo)
 
+def enviar_grafico_simulacion_telegram(fig, ticker):
+    try:
+        # Guardar la imagen del gráfico temporalmente
+        nombre_archivo = f"simulacion_{ticker}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        fig.savefig(nombre_archivo)
+        plt.close(fig)
+
+        # Enviar por Telegram
+        TELEGRAM_TOKEN = st.secrets["TELEGRAM_TOKEN"]
+        TELEGRAM_CHAT_ID = st.secrets["TELEGRAM_CHAT_ID"]
+
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendPhoto"
+        with open(nombre_archivo, "rb") as image:
+            files = {"photo": image}
+            data = {"chat_id": TELEGRAM_CHAT_ID, "caption": f"📈 Simulación de opción para {ticker}"}
+            response = requests.post(url, data=data, files=files)
+
+        if response.status_code == 200:
+            st.toast("📤 Simulación enviada por Telegram.")
+        else:
+            st.warning("⚠ No se pudo enviar el gráfico de simulación por Telegram.")
+
+        os.remove(nombre_archivo)  # Limpiar imagen temporal
+    except Exception as e:
+        st.warning(f"❌ Error al enviar la simulación por Telegram: {e}")
+
 
 def registrar_accion(ticker, accion, rentab):
     nueva_fila = pd.DataFrame([{
