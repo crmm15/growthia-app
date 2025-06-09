@@ -187,8 +187,6 @@ if archivo is not None:
         for col in ['Rentabilidad', 'Precio Actual', 'DCA', 'Costo', 'Market Value', 'Ganancias/perdidas']:
             df[col] = limpiar_col_numerica(df, col)
 
-        st.write("DF LIMPIO:", df.head())  # <--- Chequea visualmente si quedó bien
-
         # Sección 1: Gestor
         if seccion == "Gestor de Portafolio":
             st.subheader("📊 Análisis de Posiciones")
