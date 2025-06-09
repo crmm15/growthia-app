@@ -199,7 +199,7 @@ if archivo is not None:
                 dca = row["DCA"]
 
                 if pd.notna(rentab):
-                    st.markdown(f"### ▶ {ticker}: {rentab:.2f}%")
+                    st.markdown(f"### ▶ {ticker}: {rentab*100:.2f}%")
                 else:
                     st.markdown(f"### ▶ {ticker}: nan%")
 
