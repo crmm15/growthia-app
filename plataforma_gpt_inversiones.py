@@ -176,6 +176,17 @@ if archivo is not None:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col].astype(str).str.replace(",", ".").str.replace("%", ""), errors="coerce")
 
+         # Limpieza de columnas numéricas (con % y coma decimal)
+        for col in ['Rentabilidad', 'Precio Actual', 'DCA']:
+            if col in df.columns:
+                temp = (
+                    df[col]
+                    .astype(str)
+                    .str.replace("%", "", regex=False)  # Primero quita el %
+                    .str.replace(",", ".", regex=False) # Luego cambia coma por punto
+                )
+                df[col] = pd.to_numeric(temp, errors="coerce")
+
         # Sección 1: Gestor
         if seccion == "Gestor de Portafolio":
             st.subheader("📊 Análisis de Posiciones")
