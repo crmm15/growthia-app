@@ -166,21 +166,28 @@ archivo = st.sidebar.file_uploader("📁 Subí tu archivo Excel (.xlsx)", type=[
 if archivo is not None:
     df = pd.read_excel(archivo, sheet_name="Inversiones")
     df.columns = df.columns.str.strip()
-
     if 'Ticker' in df.columns and 'Cantidad' in df.columns:
         df = df[df['Ticker'].notnull() & df['Cantidad'].notnull()]
 
-        # Limpieza de columnas numéricas (con %, coma decimal y espacios)
-        for col in ['Rentabilidad', 'Precio Actual', 'DCA']:
+        # Limpieza robusta
+        def limpiar_col_numerica(df, col):
             if col in df.columns:
                 temp = (
                     df[col]
                     .astype(str)
-                    .str.replace("%", "", regex=False)   # Quita el %
-                    .str.replace(",", ".", regex=False)  # Coma a punto decimal
-                    .str.replace(" ", "", regex=False)   # Quita espacios
+                    .str.replace("%", "", regex=False)
+                    .str.replace(",", ".", regex=False)
+                    .str.replace(" ", "", regex=False)
+                    .str.strip()
                 )
-                df[col] = pd.to_numeric(temp, errors="coerce")
+                return pd.to_numeric(temp, errors="coerce")
+            else:
+                return np.nan
+
+        for col in ['Rentabilidad', 'Precio Actual', 'DCA', 'Costo', 'Market Value', 'Ganancias/perdidas']:
+            df[col] = limpiar_col_numerica(df, col)
+
+        st.write("DF LIMPIO:", df.head())  # <--- Chequea visualmente si quedó bien
 
         # Sección 1: Gestor
         if seccion == "Gestor de Portafolio":
@@ -198,7 +205,7 @@ if archivo is not None:
 
                 if pd.isna(rentab):
                     st.write("🔍 Revisión: Datos incompletos o mal formateados.")
-                elif rentab >= 15:
+                elif rentab >= 20:
                     st.write("🔒 Recomendación: Comprar PUT para proteger ganancias.")
                     col1, col2 = st.columns(2)
                     with col1:
