@@ -347,7 +347,7 @@ if archivo is not None:
                 """)
                     elif rol == "Vendedor" and tipo_opcion == "CALL":
                         st.markdown(f"""
-                - 💰 Vendés la opción y recibes ${premium:.2f}, pero asumes la obligación de vender a ${strike_price}.
+                - 💰 Vendés la opción y recibes ${premium:.2f} pero asumes la obligación de vender a ${strike_price}.
                 - ✅ Si la acción cierra por debajo del strike, ganás toda la prima.
                 - ⚠️ Si sube **por encima de ${break_even:.2f}**, comienzas a perder dinero.
                 - 📉 Riesgo ilimitado si el precio sube mucho (a menos que tengas las acciones).
