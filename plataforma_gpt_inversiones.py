@@ -172,10 +172,6 @@ if archivo is not None:
     if 'Ticker' in df.columns and 'Cantidad' in df.columns:
         df = df[df['Ticker'].notnull() & df['Cantidad'].notnull()]
 
-        for col in ['Rentabilidad', 'Precio Actual', 'DCA']:
-            if col in df.columns:
-                df[col] = pd.to_numeric(df[col].astype(str).str.replace(",", ".").str.replace("%", ""), errors="coerce")
-
          # Limpieza de columnas numéricas (con % y coma decimal)
         for col in ['Rentabilidad', 'Precio Actual', 'DCA']:
             if col in df.columns:
