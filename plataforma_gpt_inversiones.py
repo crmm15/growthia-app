@@ -7,15 +7,13 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import datetime
 import os
+import math
 import requests  # Para enviar mensajes a Telegram
+from scipy.stats import norm
 
 st.set_page_config(page_title="Agent GrowthIA M&M", layout="wide")
 st.title("🧠 Plataforma Integral para Gestión y Simulación de Inversiones")
 
-from scipy.stats import norm
-
-from scipy.stats import norm
-import math
 
 def calcular_delta_call_put(S, K, T, r, sigma, tipo="CALL"):
     """
@@ -172,14 +170,15 @@ if archivo is not None:
     if 'Ticker' in df.columns and 'Cantidad' in df.columns:
         df = df[df['Ticker'].notnull() & df['Cantidad'].notnull()]
 
-         # Limpieza de columnas numéricas (con % y coma decimal)
+        # Limpieza de columnas numéricas (con %, coma decimal y espacios)
         for col in ['Rentabilidad', 'Precio Actual', 'DCA']:
             if col in df.columns:
                 temp = (
                     df[col]
                     .astype(str)
-                    .str.replace("%", "", regex=False)  # Primero quita el %
-                    .str.replace(",", ".", regex=False) # Luego cambia coma por punto
+                    .str.replace("%", "", regex=False)   # Quita el %
+                    .str.replace(",", ".", regex=False)  # Coma a punto decimal
+                    .str.replace(" ", "", regex=False)   # Quita espacios
                 )
                 df[col] = pd.to_numeric(temp, errors="coerce")
 
