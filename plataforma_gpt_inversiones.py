@@ -203,7 +203,7 @@ if archivo is not None:
 
                 if pd.isna(rentab):
                     st.write("🔍 Revisión: Datos incompletos o mal formateados.")
-                elif rentab >= 20:
+                elif rentab >= 20%:
                     st.write("🔒 Recomendación: Comprar PUT para proteger ganancias.")
                     col1, col2 = st.columns(2)
                     with col1:
@@ -214,7 +214,7 @@ if archivo is not None:
                         if st.button(f"❌ Ignorar recomendación para {ticker}", key=f"ignorar_{ticker}"):
                             registrar_accion(ticker, "Ignorado", rentab)
                             st.info(f"🔕 Recomendación ignorada para {ticker}")
-                elif rentab > 8:
+                elif rentab > 8%:
                     st.write("🔄 Recomendación: Mantener posición.")
                     if st.button(f"✅ Confirmar mantener {ticker}", key=f"mantener_{ticker}"):
                         registrar_accion(ticker, "Mantener", rentab)
