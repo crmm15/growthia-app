@@ -342,30 +342,30 @@ if archivo is not None:
                 st.pyplot(fig)
 
                 with st.expander("ℹ️ Interpretación del gráfico"):
-                    if rol == "Vendedor" and tipo_opcion == "CALL":
-                    st.markdown(
-                        f"- 💰 Vendés la opción y recibís **${premium:.2f}** pero asumís la obligación de vender a **${strike_price:.2f}**."
-                    )
-                    st.markdown("- ✅ Si la acción cierra por debajo del strike, ganás toda la prima.")
-                    st.markdown(
-                        f"- ⚠️ Si sube **por encima de ${break_even:.2f}**, comenzás a perder dinero."
-                    )
-                    st.markdown(
-                        "- 📉 Riesgo ilimitado si el precio sube mucho (a menos que tengas las acciones)."
-                    )
+    if rol == "Vendedor" and tipo_opcion == "CALL":
+        st.markdown(
+            f"- 💰 Vendés la opción y recibís **${premium:.2f}** pero asumís la obligación de vender a **${strike_price:.2f}**."
+        )
+        st.markdown("- ✅ Si la acción cierra por debajo del strike, ganás toda la prima.")
+        st.markdown(
+            f"- ⚠️ Si sube **por encima de ${break_even:.2f}**, comenzás a perder dinero."
+        )
+        st.markdown(
+            "- 📉 Riesgo ilimitado si el precio sube mucho (a menos que tengas las acciones)."
+        )
 
-                with st.expander("📘 Perfil del rol seleccionado"):
-                if rol == "Vendedor" and tipo_opcion == "CALL":
-                    st.markdown(
-                        f"- 🤑 Recibís una prima (**${premium:.2f}**) por asumir la obligación de vender a **${strike_price:.2f}**."
-                    )
-                    st.markdown("- ✅ Ganancia máxima: la prima si la acción no supera el strike.")
-                    st.markdown(
-                        f"- ⚠️ Si el precio sube por encima de **${break_even:.2f}**, comenzás a tener pérdidas. Estas son potencialmente ilimitadas."
-                    )
-                    st.markdown(
-                        "- 🔒 Estrategia útil para generar ingresos si creés que la acción no superará el strike."
-                    )
+with st.expander("📘 Perfil del rol seleccionado"):
+    if rol == "Vendedor" and tipo_opcion == "CALL":
+        st.markdown(
+            f"- 🤑 Recibís una prima (**${premium:.2f}**) por asumir la obligación de vender a **${strike_price:.2f}**."
+        )
+        st.markdown("- ✅ Ganancia máxima: la prima si la acción no supera el strike.")
+        st.markdown(
+            f"- ⚠️ Si el precio sube por encima de **${break_even:.2f}**, comenzás a tener pérdidas. Estas son potencialmente ilimitadas."
+        )
+        st.markdown(
+            "- 🔒 Estrategia útil para generar ingresos si creés que la acción no superará el strike."
+        )
 
                 if st.button("📤 Enviar esta simulación a Telegram"):
                     enviar_grafico_simulacion_telegram(fig, selected_ticker)
