@@ -305,9 +305,8 @@ if archivo is not None:
                         st.markdown(
                             f"- 📈 Si el precio sube **por encima de ${break_even:.2f}**, tienes ganancias netas."
                         )
-                        st.markdown(
-                            "- ⚖️ El gráfico muestra tu rentabilidad según el precio al vencimiento."
-                        )
+                        st.markdown("- ⚖️ El gráfico muestra tu rentabilidad según el precio al vencimiento.")
+
                     elif rol == "Comprador" and tipo_opcion == "PUT":
                         st.markdown(
                             f"- 🎯 Comprás el derecho a vender la acción a **${strike_price:.2f}** pagando una prima de **${premium:.2f}**."
@@ -315,6 +314,7 @@ if archivo is not None:
                         st.markdown(f"- 📈 Ganás si la acción baja **por debajo de ${break_even:.2f}**.")
                         st.markdown("- 📉 Si se mantiene por encima del strike, la pérdida se limita a la prima.")
                         st.markdown("- ⚖️ El gráfico refleja tu cobertura o especulación a la baja.")
+
                     elif rol == "Vendedor" and tipo_opcion == "CALL":
                         st.markdown(
                             f"- 💰 Vendés la opción y recibís **${premium:.2f}** pero asumís la obligación de vender a **${strike_price:.2f}**."
@@ -324,6 +324,7 @@ if archivo is not None:
                             f"- ⚠️ Si sube **por encima de ${break_even:.2f}**, comenzás a perder dinero."
                         )
                         st.markdown("- 📉 Riesgo ilimitado si el precio sube mucho (a menos que tengas las acciones).")
+
                     elif rol == "Vendedor" and tipo_opcion == "PUT":
                         st.markdown(
                             f"- 💰 Vendés la opción y te pagan **${premium:.2f}** por asumir la obligación de comprar a **${strike_price:.2f}**."
