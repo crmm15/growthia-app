@@ -298,7 +298,7 @@ if archivo is not None:
 
                 with st.expander("ℹ️ Interpretación del gráfico"):
                     if rol == "Comprador" and tipo_opcion == "CALL":
-                        st.markdown(f"🎯 Comprás el derecho a comprar la acción a ${strike_price:.2f} pagando una prima de ${premium:.2f}")
+                        st.markdown(f"🎯 Comprás el derecho a comprar la acción a ${strike_price:.2f} pagando una prima de {premium:.2f}")
                         st.markdown("📉 Si el precio final está por debajo del strike, no ejercés y pierdes solo la prima")
                         st.markdown(f"📈 Si el precio sube por encima de ${break_even:.2f}, tienes ganancias netas")
                         st.markdown("⚖️ El gráfico muestra tu rentabilidad según el precio al vencimiento")
@@ -310,20 +310,20 @@ if archivo is not None:
                         st.markdown("⚖️ El gráfico refleja tu cobertura o especulación a la baja.")
 
                     elif rol == "Vendedor" and tipo_opcion == "CALL":
-                        st.markdown(f"💰 Vendés la opción y recibes ${premium:.2f}, pero asumes la obligación de vender a ${strike_price:.2f}")
+                        st.markdown(f"💰 Vendés la opción y recibes {premium:.2f} de prima, pero asumes la obligación de vender a ${strike_price:.2f}")
                         st.markdown("✅ Si la acción cierra por debajo del strike, ganás toda la prima")
                         st.markdown(f"⚠️ Si sube por encima de ${break_even:.2f}, comenzás a perder dinero")
                         st.markdown("📉 Riesgo ilimitado si el precio sube mucho (al menos que tengas las acciones)")
 
                     elif rol == "Vendedor" and tipo_opcion == "PUT":
-                        st.markdown(f"💰 Vendés la opción y te pagan ${premium:.2f} por asumir la obligación de comprar a ${strike_price:.2f}")
+                        st.markdown(f"💰 Vendés la opción y te pagan {premium:.2f} por asumir la obligación de comprar a ${strike_price:.2f}")
                         st.markdown("✅ Ganás la prima si el precio se mantiene por encima del strike")
                         st.markdown(f"⚠️ Si cae por debajo de ${break_even:.2f}, comenzás a perder dinero")
                         st.markdown("📉 Riesgo limitado: como máximo hasta que la acción llegue a $0")
 
                 with st.expander("📘 Perfil del rol seleccionado"):
                     if rol == "Comprador":
-                        st.markdown(f"💸 Pagás una prima ${premium:.2f} por el derecho a ejercer")
+                        st.markdown(f"💸 Pagás una prima {premium:.2f} por el derecho a ejercer")
                         st.markdown("📈 Ganancia potencial ilimitada (CALL) o limitada (PUT)")
                         st.markdown("🔻 Pérdida máxima: la prima")
                     else:
@@ -333,7 +333,7 @@ if archivo is not None:
                             st.markdown(f"⚠️ Si el precio sube por encima de ${break_even:.2f}, comenzás a tener pérdidas. Estas son potencialmente ilimitadas")
                             st.markdown("🔒 Estrategia útil para generar ingresos si creés que la acción no superará el strike")
                         else:
-                            st.markdown(f"💵 Recibes una prima ${premium:.2f} por asumir la obligación de comprar a ${strike_price:.2f}")
+                            st.markdown(f"💵 Recibes una prima {premium:.2f} por asumir la obligación de comprar a ${strike_price:.2f}")
                             st.markdown("✅ Ganancia máxima: la prima si la acción se mantiene por encima del strike.")
                             st.markdown(f"⚠️ Si la acción cae por debajo de ${break_even:.2f}, empiezás a tener pérdidas. El riesgo es alto, pero finito (hasta que la acción llegue a $0)")
                             st.markdown("🛡 Estrategia usada si estás dispuesto a comprar la acción más barata que hoy")
