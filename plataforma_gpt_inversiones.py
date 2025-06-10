@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -16,26 +15,15 @@ st.title("🧠 Plataforma Integral para Gestión y Simulación de Inversiones")
 
 
 def calcular_delta_call_put(S, K, T, r, sigma, tipo="CALL"):
-    """
-    Calcula el delta de una opción usando Black-Scholes.
-    S = precio actual del activo
-    K = precio de ejercicio (strike)
-    T = tiempo hasta vencimiento (en años)
-    r = tasa libre de riesgo (anual)
-    sigma = volatilidad (anual)
-    tipo = "CALL" o "PUT"
-    """
     try:
         d1 = (math.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * math.sqrt(T))
         if tipo.upper() == "CALL":
             return norm.cdf(d1)
-        else:  # PUT
+        else:
             return norm.cdf(d1) - 1
-    except Exception as e:
+    except Exception:
         return None
 
-
-# Menú principal
 seccion = st.sidebar.radio("📂 Elegí una sección", ["Inicio", "Gestor de Portafolio", "Simulador de Opciones", "Dashboard de Desempeño"])
 
 def generar_y_enviar_resumen_telegram():
@@ -49,77 +37,55 @@ def generar_y_enviar_resumen_telegram():
         print("⚠ El archivo de registro está vacío.")
         return
 
-    # --- Procesar datos
     resumen = df["Acción Tomada"].value_counts()
     rentabilidad = df.groupby("Acción Tomada")["Rentabilidad %"].mean()
 
-    # --- Crear figura
     fig, axs = plt.subplots(1, 2, figsize=(10, 4))
-    
-    # Pie chart
     axs[0].pie(resumen, labels=resumen.index, autopct="%1.1f%%", startangle=140)
     axs[0].set_title("Distribución de Decisiones")
-
-    # Bar chart
     axs[1].bar(rentabilidad.index, rentabilidad.values, color="skyblue")
     axs[1].set_title("Rentabilidad Promedio")
     axs[1].set_ylabel("Rentabilidad %")
     axs[1].tick_params(axis='x', rotation=15)
-
     plt.tight_layout()
-    
-    # Guardar imagen temporal
     nombre_archivo = f"resumen_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
     fig.savefig(nombre_archivo)
     plt.close()
-
-    # --- Enviar por Telegram
     try:
         TELEGRAM_TOKEN = st.secrets["TELEGRAM_TOKEN"]
         TELEGRAM_CHAT_ID = st.secrets["TELEGRAM_CHAT_ID"]
-
         url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendPhoto"
         with open(nombre_archivo, "rb") as image:
             files = {"photo": image}
             data = {"chat_id": TELEGRAM_CHAT_ID, "caption": "📊 Resumen de decisiones tomadas"}
             response = requests.post(url, data=data, files=files)
-
         if response.status_code == 200:
             st.toast("📈 Resumen enviado por Telegram.")
         else:
             st.warning("⚠ No se pudo enviar el gráfico por Telegram.")
     except Exception as e:
         st.warning(f"❌ Error al enviar a Telegram: {e}")
-
-    # Borrar imagen temporal (opcional)
     os.remove(nombre_archivo)
 
 def enviar_grafico_simulacion_telegram(fig, ticker):
     try:
-        # Guardar la imagen del gráfico temporalmente
         nombre_archivo = f"simulacion_{ticker}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
         fig.savefig(nombre_archivo)
         plt.close(fig)
-
-        # Enviar por Telegram
         TELEGRAM_TOKEN = st.secrets["TELEGRAM_TOKEN"]
         TELEGRAM_CHAT_ID = st.secrets["TELEGRAM_CHAT_ID"]
-
         url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendPhoto"
         with open(nombre_archivo, "rb") as image:
             files = {"photo": image}
             data = {"chat_id": TELEGRAM_CHAT_ID, "caption": f"📈 Simulación de opción para {ticker}"}
             response = requests.post(url, data=data, files=files)
-
         if response.status_code == 200:
             st.toast("📤 Simulación enviada por Telegram.")
         else:
             st.warning("⚠ No se pudo enviar el gráfico de simulación por Telegram.")
-
-        os.remove(nombre_archivo)  # Limpiar imagen temporal
+        os.remove(nombre_archivo)
     except Exception as e:
         st.warning(f"❌ Error al enviar la simulación por Telegram: {e}")
-
 
 def registrar_accion(ticker, accion, rentab):
     nueva_fila = pd.DataFrame([{
@@ -128,7 +94,6 @@ def registrar_accion(ticker, accion, rentab):
         "Acción Tomada": accion,
         "Rentabilidad %": rentab
     }])
-
     archivo_log = "registro_acciones.csv"
     if os.path.exists(archivo_log):
         historial = pd.read_csv(archivo_log)
@@ -136,18 +101,12 @@ def registrar_accion(ticker, accion, rentab):
     else:
         historial = nueva_fila
     historial.to_csv(archivo_log, index=False)
-
-    # Enviar notificación por Telegram
     try:
         TELEGRAM_TOKEN = st.secrets["TELEGRAM_TOKEN"]
         TELEGRAM_CHAT_ID = st.secrets["TELEGRAM_CHAT_ID"]
         mensaje = f"📢 Acción registrada: *{accion}* para `{ticker}` con rentabilidad *{rentab:.2f}%*"
         url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-        params = {
-            "chat_id": TELEGRAM_CHAT_ID,
-            "text": mensaje,
-            "parse_mode": "Markdown"
-        }
+        params = {"chat_id": TELEGRAM_CHAT_ID, "text": mensaje, "parse_mode": "Markdown"}
         requests.get(url, params=params)
         st.toast("📬 Notificación enviada por Telegram.")
     except Exception as e:
@@ -158,6 +117,7 @@ def calcular_payoff_call(S, K, premium):
 
 def calcular_payoff_put(S, K, premium):
     return np.maximum(K - S, 0) - premium
+
 if seccion == "Inicio":
     st.markdown(open("prompt_inicial.md", "r", encoding="utf-8").read())
 
@@ -169,7 +129,6 @@ if archivo is not None:
     if 'Ticker' in df.columns and 'Cantidad' in df.columns:
         df = df[df['Ticker'].notnull() & df['Cantidad'].notnull()]
 
-        # Limpieza robusta
         def limpiar_col_numerica(df, col):
             if col in df.columns:
                 temp = (
@@ -187,7 +146,6 @@ if archivo is not None:
         for col in ['Rentabilidad', 'Precio Actual', 'DCA', 'Costo', 'Market Value', 'Ganancias/perdidas']:
             df[col] = limpiar_col_numerica(df, col)
 
-        # Sección 1: Gestor
         if seccion == "Gestor de Portafolio":
             st.subheader("📊 Análisis de Posiciones")
             for _, row in df.iterrows():
@@ -218,19 +176,16 @@ if archivo is not None:
                     st.write("🔄 Recomendación: Mantener posición.")
                     if st.button(f"✅ Confirmar mantener {ticker}", key=f"mantener_{ticker}"):
                         registrar_accion(ticker, "Mantener", rentab)
-
                         st.success(f"✔ Acción registrada para {ticker}")
                 else:
                     st.write("📉 Recomendación: Revisar, baja rentabilidad.")
                     if st.button(f"📋 Revisar manualmente {ticker}", key=f"revisar_{ticker}"):
                         registrar_accion(ticker, "Revisión Manual", rentab)
                         st.info(f"🔍 Acción registrada para {ticker}")
-                
             st.markdown("---")
             if st.button("📤 Enviar resumen visual a Telegram", key="resumen_telegram"):
-                    generar_y_enviar_resumen_telegram()
+                generar_y_enviar_resumen_telegram()
 
-        # Sección 2: Simulador de Opciones
         elif seccion == "Simulador de Opciones":
             st.subheader("📈 Simulador de Opciones con Perfil de Riesgo")
 
@@ -342,30 +297,69 @@ if archivo is not None:
                 st.pyplot(fig)
 
                 with st.expander("ℹ️ Interpretación del gráfico"):
-    if rol == "Vendedor" and tipo_opcion == "CALL":
-        st.markdown(
-            f"- 💰 Vendés la opción y recibís **${premium:.2f}** pero asumís la obligación de vender a **${strike_price:.2f}**."
-        )
-        st.markdown("- ✅ Si la acción cierra por debajo del strike, ganás toda la prima.")
-        st.markdown(
-            f"- ⚠️ Si sube **por encima de ${break_even:.2f}**, comenzás a perder dinero."
-        )
-        st.markdown(
-            "- 📉 Riesgo ilimitado si el precio sube mucho (a menos que tengas las acciones)."
-        )
+                    if rol == "Comprador" and tipo_opcion == "CALL":
+                        st.markdown(
+                            f"- 🎯 Comprás el derecho a comprar la acción a **${strike_price:.2f}** pagando una prima de **${premium:.2f}**."
+                        )
+                        st.markdown("- 📉 Si el precio final está **por debajo del strike**, **no ejercés** y pierdes solo la prima.")
+                        st.markdown(
+                            f"- 📈 Si el precio sube **por encima de ${break_even:.2f}**, tienes ganancias netas."
+                        )
+                        st.markdown(
+                            "- ⚖️ El gráfico muestra tu rentabilidad según el precio al vencimiento."
+                        )
+                    elif rol == "Comprador" and tipo_opcion == "PUT":
+                        st.markdown(
+                            f"- 🎯 Comprás el derecho a vender la acción a **${strike_price:.2f}** pagando una prima de **${premium:.2f}**."
+                        )
+                        st.markdown(f"- 📈 Ganás si la acción baja **por debajo de ${break_even:.2f}**.")
+                        st.markdown("- 📉 Si se mantiene por encima del strike, la pérdida se limita a la prima.")
+                        st.markdown("- ⚖️ El gráfico refleja tu cobertura o especulación a la baja.")
+                    elif rol == "Vendedor" and tipo_opcion == "CALL":
+                        st.markdown(
+                            f"- 💰 Vendés la opción y recibís **${premium:.2f}** pero asumís la obligación de vender a **${strike_price:.2f}**."
+                        )
+                        st.markdown("- ✅ Si la acción cierra por debajo del strike, ganás toda la prima.")
+                        st.markdown(
+                            f"- ⚠️ Si sube **por encima de ${break_even:.2f}**, comenzás a perder dinero."
+                        )
+                        st.markdown("- 📉 Riesgo ilimitado si el precio sube mucho (a menos que tengas las acciones).")
+                    elif rol == "Vendedor" and tipo_opcion == "PUT":
+                        st.markdown(
+                            f"- 💰 Vendés la opción y te pagan **${premium:.2f}** por asumir la obligación de comprar a **${strike_price:.2f}**."
+                        )
+                        st.markdown("- ✅ Ganás la prima si el precio se mantiene por encima del strike.")
+                        st.markdown(
+                            f"- ⚠️ Si cae **por debajo de ${break_even:.2f}**, comenzás a perder dinero."
+                        )
+                        st.markdown("- 📉 Riesgo limitado: como máximo hasta que la acción llegue a $0.")
 
-with st.expander("📘 Perfil del rol seleccionado"):
-    if rol == "Vendedor" and tipo_opcion == "CALL":
-        st.markdown(
-            f"- 🤑 Recibís una prima (**${premium:.2f}**) por asumir la obligación de vender a **${strike_price:.2f}**."
-        )
-        st.markdown("- ✅ Ganancia máxima: la prima si la acción no supera el strike.")
-        st.markdown(
-            f"- ⚠️ Si el precio sube por encima de **${break_even:.2f}**, comenzás a tener pérdidas. Estas son potencialmente ilimitadas."
-        )
-        st.markdown(
-            "- 🔒 Estrategia útil para generar ingresos si creés que la acción no superará el strike."
-        )
+                with st.expander("📘 Perfil del rol seleccionado"):
+                    if rol == "Comprador":
+                        st.markdown(
+                            f"- 💸 Pagás una prima (**${premium:.2f}**) por el derecho a ejercer."
+                        )
+                        st.markdown("- 📈 Ganancia potencial ilimitada (CALL) o limitada (PUT).")
+                        st.markdown("- 🔻 Pérdida máxima: la prima.")
+                    else:
+                        if tipo_opcion == "CALL":
+                            st.markdown(
+                                f"- 💵 Recibís una prima (**${premium:.2f}**) por asumir la obligación de vender a **${strike_price:.2f}**."
+                            )
+                            st.markdown("- ✅ Ganancia máxima: la prima si la acción no supera el strike.")
+                            st.markdown(
+                                f"- ⚠️ Si el precio sube por encima de **${break_even:.2f}**, comenzás a tener pérdidas. Estas son potencialmente ilimitadas."
+                            )
+                            st.markdown("- 🔒 Estrategia útil para generar ingresos si creés que la acción no superará el strike.")
+                        else:
+                            st.markdown(
+                                f"- 💵 Recibís una prima (**${premium:.2f}**) por asumir la obligación de comprar a **${strike_price:.2f}**."
+                            )
+                            st.markdown("- ✅ Ganancia máxima: la prima si la acción se mantiene por encima del strike.")
+                            st.markdown(
+                                f"- ⚠️ Si la acción cae por debajo de **${break_even:.2f}**, empezás a tener pérdidas. El riesgo es alto, pero finito (hasta que la acción llegue a $0)."
+                            )
+                            st.markdown("- 🛡 Estrategia usada si estás dispuesto a comprar la acción más barata que hoy.")
 
                 if st.button("📤 Enviar esta simulación a Telegram"):
                     enviar_grafico_simulacion_telegram(fig, selected_ticker)
@@ -373,8 +367,6 @@ with st.expander("📘 Perfil del rol seleccionado"):
             else:
                 st.warning("⚠ No se encontró cadena de opciones para este ticker.")
 
-
-        # Sección 3: Dashboard
         elif seccion == "Dashboard de Desempeño":
             try:
                 historial = pd.read_csv("registro_acciones.csv")
@@ -395,6 +387,7 @@ with st.expander("📘 Perfil del rol seleccionado"):
                 st.error("No se encontró 'registro_acciones.csv'. Ejecutá primero el gestor.")
 else:
     st.info("Subí el archivo Excel para empezar.")
+
 
 # --- Envío automático del resumen diario por Telegram a las 23hs ---
 # from datetime import datetime
