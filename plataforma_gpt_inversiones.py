@@ -317,7 +317,7 @@ if archivo is not None:
 
                     elif rol == "Vendedor" and tipo_opcion == "CALL":
                         st.markdown(
-                            f"- 💰 Vendés la opción y recibís **${premium:.2f}** pero asumís la obligación de vender a **${strike_price:.2f}**."
+                            f"- 💰 Vendés la opción y recibes **${premium:.2f}** pero asumís la obligación de vender a **${strike_price:.2f}**."
                         )
                         st.markdown("- ✅ Si la acción cierra por debajo del strike, ganás toda la prima.")
                         st.markdown(
@@ -345,7 +345,7 @@ if archivo is not None:
                     else:
                         if tipo_opcion == "CALL":
                             st.markdown(
-                                f"- 💵 Recibís una prima (**${premium:.2f}**) por asumir la obligación de vender a **${strike_price:.2f}**."
+                                f"- 💵 Recibes una prima (**${premium:.2f}**) por asumir la obligación de vender a **${strike_price:.2f}**."
                             )
                             st.markdown("- ✅ Ganancia máxima: la prima si la acción no supera el strike.")
                             st.markdown(
@@ -354,7 +354,7 @@ if archivo is not None:
                             st.markdown("- 🔒 Estrategia útil para generar ingresos si creés que la acción no superará el strike.")
                         else:
                             st.markdown(
-                                f"- 💵 Recibís una prima (**${premium:.2f}**) por asumir la obligación de comprar a **${strike_price:.2f}**."
+                                f"- 💵 Recibes una prima (**${premium:.2f}**) por asumir la obligación de comprar a **${strike_price:.2f}**."
                             )
                             st.markdown("- ✅ Ganancia máxima: la prima si la acción se mantiene por encima del strike.")
                             st.markdown(
