@@ -342,7 +342,7 @@ if archivo is not None:
                 st.pyplot(fig)
 
                 with st.expander("ℹ️ Interpretación del gráfico"):
-                if rol == "Vendedor" and tipo_opcion == "CALL":
+                    if rol == "Vendedor" and tipo_opcion == "CALL":
                     st.markdown(
                         f"- 💰 Vendés la opción y recibís **${premium:.2f}** pero asumís la obligación de vender a **${strike_price:.2f}**."
                     )
@@ -354,7 +354,7 @@ if archivo is not None:
                         "- 📉 Riesgo ilimitado si el precio sube mucho (a menos que tengas las acciones)."
                     )
 
-            with st.expander("📘 Perfil del rol seleccionado"):
+                with st.expander("📘 Perfil del rol seleccionado"):
                 if rol == "Vendedor" and tipo_opcion == "CALL":
                     st.markdown(
                         f"- 🤑 Recibís una prima (**${premium:.2f}**) por asumir la obligación de vender a **${strike_price:.2f}**."
@@ -366,8 +366,6 @@ if archivo is not None:
                     st.markdown(
                         "- 🔒 Estrategia útil para generar ingresos si creés que la acción no superará el strike."
                     )
-
-
 
                 if st.button("📤 Enviar esta simulación a Telegram"):
                     enviar_grafico_simulacion_telegram(fig, selected_ticker)
