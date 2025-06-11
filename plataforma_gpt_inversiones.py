@@ -63,7 +63,7 @@ if seccion == "Backtesting Darvas":
         st.dataframe(df.head(10))
 
         # Normaliza nombres de columnas
-        df.columns = [col.capitalize() for col in df.columns]
+        df.columns = [str(col).capitalize() for col in df.columns]
         st.write("Columnas del DataFrame:", list(df.columns))  # <-- para debug visual
 
         required_cols = ["Close", "High", "Low"]
