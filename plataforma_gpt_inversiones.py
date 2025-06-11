@@ -72,12 +72,8 @@ if seccion == "Backtesting Darvas":
                 st.error(f"El DataFrame descargado NO tiene todas las columnas requeridas: {required_cols}.")
                 st.dataframe(df)
             else:
-                window = 20
-                df = df.reset_index(drop=False)
-                df = df.dropna(subset=required_cols)
-
                 # ---- Cálculo Darvas ----
-                                window = 20
+                window = 20
                 df = df.reset_index(drop=False)
                 df = df.dropna(subset=required_cols)
 
