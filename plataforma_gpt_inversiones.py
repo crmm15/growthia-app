@@ -46,15 +46,7 @@ if seccion == "Backtesting Darvas":
     fecha_fin = st.date_input("Hasta", value=datetime.date.today(), key="darvas_fin")
 
     if st.button("Ejecutar Backtest Darvas", key="ejecutar_backtest_darvas"):
-        st.info("Descargando datos históricos...")
-
-    df = yf.download(
-        activo,
-        start=fecha_inicio,
-        end=fecha_fin + datetime.timedelta(days=1),
-        interval=timeframe,
-        progress=False
-    )
+    st.info("Descargando datos históricos...")
 
     df = yf.download(
         activo,
@@ -70,39 +62,43 @@ if seccion == "Backtesting Darvas":
         st.success(f"Datos descargados: {len(df)} filas")
         st.dataframe(df.head(10))
 
-        window = 20  # Puedes ponerlo parametrizable si quieres
+        # Normaliza nombres de columnas
+        df.columns = [col.capitalize() for col in df.columns]
+        st.write("Columnas del DataFrame:", list(df.columns))  # <-- para debug visual
 
-        df = df.reset_index(drop=False)
         required_cols = ["Close", "High", "Low"]
         if not all(col in df.columns for col in required_cols):
             st.error(f"El DataFrame descargado NO tiene todas las columnas requeridas: {required_cols}.")
+            st.write("Columnas reales:", list(df.columns))
             st.dataframe(df)
         else:
+            window = 20
+            df = df.reset_index(drop=False)
             df = df.dropna(subset=required_cols)
-            # ... el resto del procesamiento ...
 
-        df['darvas_high'] = df['High'].rolling(window=window, min_periods=1).max()
-        df['darvas_low'] = df['Low'].rolling(window=window, min_periods=1).min()
-        df['buy_signal'] = df['Close'] > df['darvas_high'].shift(1)
-        df['sell_signal'] = df['Close'] < df['darvas_low'].shift(1)
+            df['darvas_high'] = df['High'].rolling(window=window, min_periods=1).max()
+            df['darvas_low'] = df['Low'].rolling(window=window, min_periods=1).min()
+            df['buy_signal'] = df['Close'] > df['darvas_high'].shift(1)
+            df['sell_signal'] = df['Close'] < df['darvas_low'].shift(1)
 
-        st.write("Primeras señales detectadas:")
-        st.dataframe(df.loc[df['buy_signal'] | df['sell_signal'],
-                            ["Close", "darvas_high", "darvas_low", "buy_signal", "sell_signal"]].head(10))
+            st.write("Primeras señales detectadas:")
+            st.dataframe(df.loc[df['buy_signal'] | df['sell_signal'],
+                                ["Close", "darvas_high", "darvas_low", "buy_signal", "sell_signal"]].head(10))
 
-        fig, ax = plt.subplots(figsize=(12, 5))
-        ax.plot(df['index'], df['Close'], label="Precio Close", color="black")
-        ax.plot(df['index'], df['darvas_high'], label="Darvas High", color="green", linestyle="--", alpha=0.6)
-        ax.plot(df['index'], df['darvas_low'], label="Darvas Low", color="red", linestyle="--", alpha=0.6)
-        ax.scatter(df.loc[df['buy_signal'], 'index'], df.loc[df['buy_signal'], 'Close'],
-                   label="Compra", marker="^", color="blue", s=100)
-        ax.scatter(df.loc[df['sell_signal'], 'index'], df.loc[df['sell_signal'], 'Close'],
-                   label="Venta", marker="v", color="orange", s=100)
-        ax.set_title(f"Darvas Box Backtest - {activo_nombre} [{timeframe}]")
-        ax.legend()
-        st.pyplot(fig)
+            fig, ax = plt.subplots(figsize=(12, 5))
+            ax.plot(df['index'], df['Close'], label="Precio Close", color="black")
+            ax.plot(df['index'], df['darvas_high'], label="Darvas High", color="green", linestyle="--", alpha=0.6)
+            ax.plot(df['index'], df['darvas_low'], label="Darvas Low", color="red", linestyle="--", alpha=0.6)
+            ax.scatter(df.loc[df['buy_signal'], 'index'], df.loc[df['buy_signal'], 'Close'],
+                    label="Compra", marker="^", color="blue", s=100)
+            ax.scatter(df.loc[df['sell_signal'], 'index'], df.loc[df['sell_signal'], 'Close'],
+                    label="Venta", marker="v", color="orange", s=100)
+            ax.set_title(f"Darvas Box Backtest - {activo_nombre} [{timeframe}]")
+            ax.legend()
+            st.pyplot(fig)
 
-        st.info("Esta es una versión demo con lógica Darvas base y sin confirmaciones extra. ¿Quieres agregar la lógica de tendencia/volumen o estadísticas de resultados?")
+            st.info("Esta es una versión demo con lógica Darvas base y sin confirmaciones extra. ¿Quieres agregar la lógica de tendencia/volumen o estadísticas de resultados?")
+
 
 # ---- AQUÍ SIGUE TODO EL RESTO DE TU APP ----
 # (Gestor de Portafolio, Simulador de Opciones, Dashboard, Inicio, etc)
