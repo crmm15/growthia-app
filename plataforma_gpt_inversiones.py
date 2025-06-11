@@ -36,6 +36,7 @@ if seccion == "Backtesting Darvas":
         "Amazon (AMZN)": "AMZN",
         "S&P500 ETF (SPY)": "SPY"
     }
+
     activo_nombre = st.selectbox("Elige activo para backtesting", list(activos_predef.keys()))
     activo = activos_predef[activo_nombre]
 
@@ -60,7 +61,7 @@ if seccion == "Backtesting Darvas":
         st.error("No se encontraron datos para ese activo y timeframe. Prueba otra combinación.")
     else:
         st.success(f"Datos descargados: {len(df)} filas")
-        st.dataframe(df.head(50))
+        st.dataframe(df.head(df))
 
         # --- Solución robusta: normaliza nombres ---
         if isinstance(df.columns[0], tuple):
@@ -82,13 +83,33 @@ if seccion == "Backtesting Darvas":
             df = df.reset_index(drop=False)
             df = df.dropna(subset=required_cols)
 
+            # ---- Cálculo clásico de cajas Darvas ----
             df['darvas_high'] = df['High'].rolling(window=window, min_periods=1).max()
             df['darvas_low'] = df['Low'].rolling(window=window, min_periods=1).min()
             df['buy_signal'] = df['Close'] > df['darvas_high'].shift(1)
             df['sell_signal'] = df['Close'] < df['darvas_low'].shift(1)
 
+            # ---- FILTRO DE TENDENCIA (simulando MavilimW con MA3 y MA5) ----
+            df['ma3'] = df['Close'].rolling(window=3).mean()
+            df['ma5'] = df['Close'].rolling(window=5).mean()
+            df['trend_filter'] = (df['Close'] > df['ma3']) & (df['Close'] > df['ma5'])
+
+            # ---- FILTRO DE FUERZA/VOLUMEN (Proxy WAE) ----
+            fast_ema = df['Close'].ewm(span=20, adjust=False).mean()
+            slow_ema = df['Close'].ewm(span=40, adjust=False).mean()
+            df['wae_value'] = fast_ema - slow_ema
+            bb_length = 20
+            bb_std_mult = 2
+            df['wae_ema'] = df['wae_value'].ewm(span=bb_length, adjust=False).mean()
+            df['wae_std'] = df['wae_value'].rolling(window=bb_length).std()
+            df['wae_upper'] = df['wae_ema'] + bb_std_mult * df['wae_std']
+            df['wae_filter'] = df['wae_value'] > df['wae_upper']
+
+            # ---- SEÑAL FINAL ----
+            df['buy_final'] = df['buy_signal'] & df['trend_filter'] & df['wae_filter']
+
             st.write("Primeras señales detectadas:")
-            st.dataframe(df.loc[df['buy_signal'] | df['sell_signal'],["Close", "darvas_high", "darvas_low", "buy_signal", "sell_signal"]].head(10))
+            st.dataframe(df.loc[df['buy_final'] | df['sell_signal'], ["Close", "darvas_high", "darvas_low", "ma3", "ma5", "wae_value", "wae_upper", "buy_signal", "trend_filter", "wae_filter", "buy_final", "sell_signal"]].head(15))
 
             fig, ax = plt.subplots(figsize=(12, 5))
             ax.plot(df.index, df['Close'], label="Precio Close", color="black")
