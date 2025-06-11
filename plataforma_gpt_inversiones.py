@@ -10,77 +10,87 @@ import math
 import requests  # Para enviar mensajes a Telegram
 from scipy.stats import norm
 
-# --- SECCIÓN: BACKTESTING DARVAS BOX ---
-st.header("📦 Backtesting Estrategia Darvas Box")
-
-# 1. Selección de activo y timeframe
-activos_predef = {
-    "BTC/USD": "BTC-USD",
-    "ETH/USD": "ETH-USD",
-    "Apple (AAPL)": "AAPL",
-    "Tesla (TSLA)": "TSLA",
-    "Amazon (AMZN)": "AMZN",
-    "S&P500 ETF (SPY)": "SPY"
-}
-activo_nombre = st.selectbox("Elige activo para backtesting", list(activos_predef.keys()))
-activo = activos_predef[activo_nombre]
-
-timeframes = ["1d", "1h", "15m", "5m"]
-timeframe = st.selectbox("Temporalidad", timeframes)
-
-fecha_inicio = st.date_input("Desde", value=datetime.date(2023, 1, 1), key="darvas_ini")
-fecha_fin = st.date_input("Hasta", value=datetime.date.today(), key="darvas_fin")
-
-if st.button("Ejecutar Backtest Darvas"):
-    st.info("Descargando datos históricos...")
-
-    df = yf.download(
-        activo,
-        start=fecha_inicio,
-        end=fecha_fin + datetime.timedelta(days=1),
-        interval=timeframe,
-        progress=False
-    )
-
-    if df.empty:
-        st.error("No se encontraron datos para ese activo y timeframe. Prueba otra combinación.")
-    else:
-        st.success(f"Datos descargados: {len(df)} filas")
-        st.dataframe(df.head(10))
-
-        # --- Lógica Darvas Box simple: buscar cajas de 20 velas (ajustable luego) ---
-        window = 20  # Puedes hacer esto un parámetro configurable luego
-
-        # Cálculo de los límites superior/inferior Darvas (rolling window)
-        df['darvas_high'] = df['High'].rolling(window=window, min_periods=1).max()
-        df['darvas_low'] = df['Low'].rolling(window=window, min_periods=1).min()
-
-        # Señal de ruptura al alza (compra) y a la baja (venta/stop)
-        df['buy_signal'] = (df['Close'] > df['darvas_high'].shift(1))  # Rompe por arriba
-        df['sell_signal'] = (df['Close'] < df['darvas_low'].shift(1))  # Rompe por abajo
-
-        # Mostrar primeras señales
-        st.write("Primeras señales detectadas:")
-        st.dataframe(df.loc[df['buy_signal'] | df['sell_signal'], ["Close", "darvas_high", "darvas_low", "buy_signal", "sell_signal"]].head(10))
-
-        # Graficar resultados
-        fig, ax = plt.subplots(figsize=(12, 5))
-        ax.plot(df.index, df['Close'], label="Precio Close", color="black")
-        ax.plot(df.index, df['darvas_high'], label="Darvas High", color="green", linestyle="--", alpha=0.6)
-        ax.plot(df.index, df['darvas_low'], label="Darvas Low", color="red", linestyle="--", alpha=0.6)
-        # Marcar señales de compra
-        ax.scatter(df.index[df['buy_signal']], df['Close'][df['buy_signal']], label="Compra", marker="^", color="blue", s=100)
-        # Marcar señales de venta
-        ax.scatter(df.index[df['sell_signal']], df['Close'][df['sell_signal']], label="Venta", marker="v", color="orange", s=100)
-        ax.set_title(f"Darvas Box Backtest - {activo_nombre} [{timeframe}]")
-        ax.legend()
-        st.pyplot(fig)
-
-        st.info("Esta es una versión demo con lógica Darvas base y sin confirmaciones extra. ¿Quieres agregar la lógica de tendencia/volumen o estadísticas de resultados?")
-        
 st.set_page_config(page_title="Agent GrowthIA M&M", layout="wide")
 st.title("🧠 Plataforma Integral para Gestión y Simulación de Inversiones")
 
+# ---- MENÚ LATERAL PRINCIPAL ----
+seccion = st.sidebar.radio(
+    "📂 Elegí una sección",
+    [
+        "Inicio",
+        "Gestor de Portafolio",
+        "Simulador de Opciones",
+        "Dashboard de Desempeño",
+        "Backtesting Darvas"
+    ]
+)
+
+# ---- SECCIÓN BACKTESTING DARVAS ----
+if seccion == "Backtesting Darvas":
+    st.header("📦 Backtesting Estrategia Darvas Box")
+    activos_predef = {
+        "BTC/USD": "BTC-USD",
+        "ETH/USD": "ETH-USD",
+        "Apple (AAPL)": "AAPL",
+        "Tesla (TSLA)": "TSLA",
+        "Amazon (AMZN)": "AMZN",
+        "S&P500 ETF (SPY)": "SPY"
+    }
+    activo_nombre = st.selectbox("Elige activo para backtesting", list(activos_predef.keys()))
+    activo = activos_predef[activo_nombre]
+
+    timeframes = ["1d", "1h", "15m", "5m"]
+    timeframe = st.selectbox("Temporalidad", timeframes)
+
+    fecha_inicio = st.date_input("Desde", value=datetime.date(2023, 1, 1), key="darvas_ini")
+    fecha_fin = st.date_input("Hasta", value=datetime.date.today(), key="darvas_fin")
+
+    if st.button("Ejecutar Backtest Darvas"):
+        st.info("Descargando datos históricos...")
+
+        df = yf.download(
+            activo,
+            start=fecha_inicio,
+            end=fecha_fin + datetime.timedelta(days=1),
+            interval=timeframe,
+            progress=False
+        )
+
+        if df.empty:
+            st.error("No se encontraron datos para ese activo y timeframe. Prueba otra combinación.")
+        else:
+            st.success(f"Datos descargados: {len(df)} filas")
+            st.dataframe(df.head(10))
+
+            window = 20  # Este parámetro puede ser configurable más adelante
+
+            df['darvas_high'] = df['High'].rolling(window=window, min_periods=1).max()
+            df['darvas_low'] = df['Low'].rolling(window=window, min_periods=1).min()
+            df['buy_signal'] = (df['Close'] > df['darvas_high'].shift(1))
+            df['sell_signal'] = (df['Close'] < df['darvas_low'].shift(1))
+
+            st.write("Primeras señales detectadas:")
+            st.dataframe(df.loc[df['buy_signal'] | df['sell_signal'], ["Close", "darvas_high", "darvas_low", "buy_signal", "sell_signal"]].head(10))
+
+            fig, ax = plt.subplots(figsize=(12, 5))
+            ax.plot(df.index, df['Close'], label="Precio Close", color="black")
+            ax.plot(df.index, df['darvas_high'], label="Darvas High", color="green", linestyle="--", alpha=0.6)
+            ax.plot(df.index, df['darvas_low'], label="Darvas Low", color="red", linestyle="--", alpha=0.6)
+            ax.scatter(df.index[df['buy_signal']], df['Close'][df['buy_signal']], label="Compra", marker="^", color="blue", s=100)
+            ax.scatter(df.index[df['sell_signal']], df['Close'][df['sell_signal']], label="Venta", marker="v", color="orange", s=100)
+            ax.set_title(f"Darvas Box Backtest - {activo_nombre} [{timeframe}]")
+            ax.legend()
+            st.pyplot(fig)
+
+            st.info("Esta es una versión demo con lógica Darvas base y sin confirmaciones extra. ¿Quieres agregar la lógica de tendencia/volumen o estadísticas de resultados?")
+
+# ---- AQUÍ SIGUE TODO EL RESTO DE TU APP ----
+# (Gestor de Portafolio, Simulador de Opciones, Dashboard, Inicio, etc)
+# No cambió, solo se muestra cuando esa opción es seleccionada en el menú.
+
+# Ejemplo:
+if seccion == "Inicio":
+    st.markdown(open("prompt_inicial.md", "r", encoding="utf-8").read())
 
 def calcular_delta_call_put(S, K, T, r, sigma, tipo="CALL"):
     try:
