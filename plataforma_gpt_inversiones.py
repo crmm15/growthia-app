@@ -108,20 +108,33 @@ if seccion == "Backtesting Darvas":
             # ---- SEÑAL FINAL ----
             df['buy_final'] = df['buy_signal'] & df['trend_filter'] & df['wae_filter']
 
+            # --- Mostrar tabla con tooltips en las columnas ---
             st.write("Primeras señales detectadas:")
-            st.dataframe(df.loc[df['buy_final'] | df['sell_signal'], ["Close", "darvas_high", "darvas_low", "ma3", "ma5", "wae_value", "wae_upper", "buy_signal", "trend_filter", "wae_filter", "buy_final", "sell_signal"]].head(15))
 
-            fig, ax = plt.subplots(figsize=(12, 5))
-            ax.plot(df.index, df['Close'], label="Precio Close", color="black")
-            ax.plot(df.index, df['darvas_high'], label="Darvas High", color="green", linestyle="--", alpha=0.6)
-            ax.plot(df.index, df['darvas_low'], label="Darvas Low", color="red", linestyle="--", alpha=0.6)
-            ax.scatter(df.index[df['buy_signal']], df.loc[df['buy_signal'], 'Close'], label="Compra", marker="^", color="blue", s=100)
-            ax.scatter(df.index[df['sell_signal']], df.loc[df['sell_signal'], 'Close'], label="Venta", marker="v", color="orange", s=100)    
+            st.dataframe(
+                df.loc[df['buy_signal'] | df['sell_signal'], [
+                    "Close", "darvas_high", "darvas_low", "ma3", "ma5", "wae_value", "wae_upper",
+                    "buy_signal", "trend_filter", "wae_filter", "buy_final", "sell_signal"
+                ]].head(50),  # Muestra las primeras 50 por ejemplo
+                column_config={
+                    "Close": st.column_config.NumberColumn("Close", help="Precio de cierre del periodo."),
+                    "darvas_high": st.column_config.NumberColumn("darvas_high", help="Máximo de los últimos 20 periodos (techo Darvas)."),
+                    "darvas_low": st.column_config.NumberColumn("darvas_low", help="Mínimo de los últimos 20 periodos (base Darvas)."),
+                    "ma3": st.column_config.NumberColumn("ma3", help="Media móvil de 3 periodos (tendencia rápida)."),
+                    "ma5": st.column_config.NumberColumn("ma5", help="Media móvil de 5 periodos (tendencia lenta)."),
+                    "wae_value": st.column_config.NumberColumn("wae_value", help="Oscilador: diferencia entre EMAs rápida y lenta (proxy de fuerza/volumen)."),
+                    "wae_upper": st.column_config.NumberColumn("wae_upper", help="Umbral: desvío estándar multiplicado por 2 (marca fuerza significativa)."),
+                    "buy_signal": st.column_config.CheckboxColumn("buy_signal", help="True si el cierre rompe el máximo Darvas anterior."),
+                    "trend_filter": st.column_config.CheckboxColumn("trend_filter", help="True si la tendencia es positiva (ma3 > ma5)."),
+                    "wae_filter": st.column_config.CheckboxColumn("wae_filter", help="True si la fuerza/momentum supera el umbral."),
+                    "buy_final": st.column_config.CheckboxColumn("buy_final", help="True si TODAS las condiciones de entrada están OK (ruptura + tendencia + fuerza)."),
+                    "sell_signal": st.column_config.CheckboxColumn("sell_signal", help="True si el cierre rompe el mínimo Darvas anterior."),
+                }
+            )
+  
             ax.set_title(f"Darvas Box Backtest - {activo_nombre} [{timeframe}]")
             ax.legend()
             st.pyplot(fig)
-
-            st.info("Esta es una versión demo con lógica Darvas base y sin confirmaciones extra. ¿Quieres agregar la lógica de tendencia/volumen o estadísticas de resultados?")
 
 
 # ---- AQUÍ SIGUE TODO EL RESTO DE TU APP ----
