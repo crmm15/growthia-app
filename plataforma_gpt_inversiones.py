@@ -61,7 +61,7 @@ if seccion == "Backtesting Darvas":
         st.error("No se encontraron datos para ese activo y timeframe. Prueba otra combinación.")
     else:
         st.success(f"Datos descargados: {len(df)} filas")
-        st.dataframe(df.head(df))
+        st.dataframe(df)
 
         # --- Solución robusta: normaliza nombres ---
         if isinstance(df.columns[0], tuple):
