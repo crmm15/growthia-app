@@ -56,19 +56,27 @@ if seccion == "Backtesting Darvas":
         progress=False
     )
 
+    if st.button("Ejecutar Backtest Darvas"):
+    st.info("Descargando datos históricos...")
+
+    df = yf.download(
+        activo,
+        start=fecha_inicio,
+        end=fecha_fin + datetime.timedelta(days=1),
+        interval=timeframe,
+        progress=False
+    )
+
     if df.empty:
         st.error("No se encontraron datos para ese activo y timeframe. Prueba otra combinación.")
     else:
         st.success(f"Datos descargados: {len(df)} filas")
         st.dataframe(df.head(10))
 
-        window = 20  # Este parámetro puede ser configurable más adelante
+        window = 20  # Puedes ponerlo parametrizable si quieres
 
-        # --- Evita errores de alineación: resetea el índice y borra NaN clave
         df = df.reset_index(drop=False)
         df = df.dropna(subset=["Close", "High", "Low"])
-
-        # --- Lógica Darvas
         df['darvas_high'] = df['High'].rolling(window=window, min_periods=1).max()
         df['darvas_low'] = df['Low'].rolling(window=window, min_periods=1).min()
         df['buy_signal'] = df['Close'] > df['darvas_high'].shift(1)
@@ -78,7 +86,6 @@ if seccion == "Backtesting Darvas":
         st.dataframe(df.loc[df['buy_signal'] | df['sell_signal'],
                             ["Close", "darvas_high", "darvas_low", "buy_signal", "sell_signal"]].head(10))
 
-        # --- Graficar resultados
         fig, ax = plt.subplots(figsize=(12, 5))
         ax.plot(df['index'], df['Close'], label="Precio Close", color="black")
         ax.plot(df['index'], df['darvas_high'], label="Darvas High", color="green", linestyle="--", alpha=0.6)
