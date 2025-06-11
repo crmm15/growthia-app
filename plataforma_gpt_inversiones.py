@@ -93,13 +93,11 @@ if seccion == "Backtesting Darvas":
                                 ["Close", "darvas_high", "darvas_low", "buy_signal", "sell_signal"]].head(10))
 
             fig, ax = plt.subplots(figsize=(12, 5))
-            ax.plot(df['index'], df['Close'], label="Precio Close", color="black")
-            ax.plot(df['index'], df['darvas_high'], label="Darvas High", color="green", linestyle="--", alpha=0.6)
-            ax.plot(df['index'], df['darvas_low'], label="Darvas Low", color="red", linestyle="--", alpha=0.6)
-            ax.scatter(df.loc[df['buy_signal'], 'index'], df.loc[df['buy_signal'], 'Close'],
-                    label="Compra", marker="^", color="blue", s=100)
-            ax.scatter(df.loc[df['sell_signal'], 'index'], df.loc[df['sell_signal'], 'Close'],
-                    label="Venta", marker="v", color="orange", s=100)
+            ax.plot(df.index, df['Close'], label="Precio Close", color="black")
+            ax.plot(df.index, df['darvas_high'], label="Darvas High", color="green", linestyle="--", alpha=0.6)
+            ax.plot(df.index, df['darvas_low'], label="Darvas Low", color="red", linestyle="--", alpha=0.6)
+            ax.scatter(df.index[df['buy_signal']], df.loc[df['buy_signal'], 'Close'], label="Compra", marker="^", color="blue", s=100)
+            ax.scatter(df.index[df['sell_signal']], df.loc[df['sell_signal'], 'Close'], label="Venta", marker="v", color="orange", s=100)    
             ax.set_title(f"Darvas Box Backtest - {activo_nombre} [{timeframe}]")
             ax.legend()
             st.pyplot(fig)
