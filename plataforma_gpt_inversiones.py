@@ -258,6 +258,19 @@ if seccion == "Inicio":
 
 archivo = st.sidebar.file_uploader("📁 Subí tu archivo Excel (.xlsx)", type=["xlsx"])
 
+# Solo para las secciones que usan el Excel
+if seccion in ["Gestor de Portafolio", "Simulador de Opciones", "Dashboard de Desempeño"]:
+    if archivo is not None:
+        # ... aquí todo tu código de carga y procesamiento del Excel ...
+        # ...
+        # (nada cambia aquí, todo igual que ya tienes)
+        pass
+    else:
+        st.info("Subí el archivo Excel para empezar.")
+
+# El resto de secciones NO necesitan el Excel cargado, así que no hacen nada aquí
+
+
 if archivo is not None:
     df = pd.read_excel(archivo, sheet_name="Inversiones")
     df.columns = df.columns.str.strip()
@@ -497,8 +510,6 @@ if archivo is not None:
                 st.line_chart(df_filtrado.set_index("Fecha")["Rentabilidad %"])
             except FileNotFoundError:
                 st.error("No se encontró 'registro_acciones.csv'. Ejecutá primero el gestor.")
-#else:
-   # st.info("Subí el archivo Excel para empezar.")
 
 
 # --- Envío automático del resumen diario por Telegram a las 23hs ---
