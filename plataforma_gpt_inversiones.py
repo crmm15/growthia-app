@@ -102,10 +102,6 @@ def calcular_delta_call_put(S, K, T, r, sigma, tipo="CALL"):
     except Exception:
         return None
 
-seccion = st.sidebar.radio(
-    "📂 Elegí una sección", 
-    ["Inicio", "Gestor de Portafolio", "Simulador de Opciones", "Dashboard de Desempeño", "Backtesting Darvas"])
-
 
 def generar_y_enviar_resumen_telegram():
     archivo_log = "registro_acciones.csv"
