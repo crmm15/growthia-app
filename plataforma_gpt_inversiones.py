@@ -66,7 +66,7 @@ if seccion == "Backtesting Darvas":
         df.columns = [str(col).capitalize() for col in df.columns]
         st.write("Columnas del DataFrame:", list(df.columns))  # <-- para debug visual
 
-        required_cols = ["Close", "High", "Low"]
+        required_cols = ["close", "high", "low"]
         if not all(col in df.columns for col in required_cols):
             st.error(f"El DataFrame descargado NO tiene todas las columnas requeridas: {required_cols}.")
             st.write("Columnas reales:", list(df.columns))
@@ -76,22 +76,22 @@ if seccion == "Backtesting Darvas":
             df = df.reset_index(drop=False)
             df = df.dropna(subset=required_cols)
 
-            df['darvas_high'] = df['High'].rolling(window=window, min_periods=1).max()
-            df['darvas_low'] = df['Low'].rolling(window=window, min_periods=1).min()
-            df['buy_signal'] = df['Close'] > df['darvas_high'].shift(1)
-            df['sell_signal'] = df['Close'] < df['darvas_low'].shift(1)
+            df['darvas_high'] = df['high'].rolling(window=window, min_periods=1).max()
+            df['darvas_low'] = df['low'].rolling(window=window, min_periods=1).min()
+            df['buy_signal'] = df['close'] > df['darvas_high'].shift(1)
+            df['sell_signal'] = df['close'] < df['darvas_low'].shift(1)
 
             st.write("Primeras señales detectadas:")
             st.dataframe(df.loc[df['buy_signal'] | df['sell_signal'],
-                                ["Close", "darvas_high", "darvas_low", "buy_signal", "sell_signal"]].head(10))
+                                ["close", "darvas_high", "darvas_low", "buy_signal", "sell_signal"]].head(10))
 
             fig, ax = plt.subplots(figsize=(12, 5))
-            ax.plot(df['index'], df['Close'], label="Precio Close", color="black")
+            ax.plot(df['index'], df['close'], label="Precio Close", color="black")
             ax.plot(df['index'], df['darvas_high'], label="Darvas High", color="green", linestyle="--", alpha=0.6)
             ax.plot(df['index'], df['darvas_low'], label="Darvas Low", color="red", linestyle="--", alpha=0.6)
-            ax.scatter(df.loc[df['buy_signal'], 'index'], df.loc[df['buy_signal'], 'Close'],
+            ax.scatter(df.loc[df['buy_signal'], 'index'], df.loc[df['buy_signal'], 'close'],
                     label="Compra", marker="^", color="blue", s=100)
-            ax.scatter(df.loc[df['sell_signal'], 'index'], df.loc[df['sell_signal'], 'Close'],
+            ax.scatter(df.loc[df['sell_signal'], 'index'], df.loc[df['sell_signal'], 'close'],
                     label="Venta", marker="v", color="orange", s=100)
             ax.set_title(f"Darvas Box Backtest - {activo_nombre} [{timeframe}]")
             ax.legend()
