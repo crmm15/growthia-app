@@ -25,7 +25,6 @@ seccion = st.sidebar.radio(
     ]
 )
 
-# ---- SECCIÓN BACKTESTING DARVAS ----
 if seccion == "Backtesting Darvas":
     st.header("📦 Backtesting Estrategia Darvas Box")
     activos_predef = {
@@ -67,7 +66,7 @@ if seccion == "Backtesting Darvas":
                 df.columns = [col[0].capitalize() for col in df.columns]
             else:
                 df.columns = [str(col).capitalize() for col in df.columns]
-           
+
             required_cols = ["Close", "High", "Low"]
             if not all(col in df.columns for col in required_cols):
                 st.error(f"El DataFrame descargado NO tiene todas las columnas requeridas: {required_cols}.")
@@ -80,13 +79,21 @@ if seccion == "Backtesting Darvas":
                 # ---- Cálculo Darvas ----
                 df['darvas_high'] = df['High'].rolling(window=window, min_periods=1).max()
                 df['darvas_low'] = df['Low'].rolling(window=window, min_periods=1).min()
-                df['buy_signal'] = df['Close'] > df['darvas_high'].shift(1)
+
+                # Señal de ruptura ÚNICA
+                df['prev_darvas_high'] = df['darvas_high'].shift(1)
+                df['prev_close'] = df['Close'].shift(1)
+                df['buy_signal'] = (
+                    (df['Close'] > df['prev_darvas_high']) & 
+                    (df['prev_close'] <= df['prev_darvas_high'])
+                )
+
                 df['sell_signal'] = df['Close'] < df['darvas_low'].shift(1)
 
-                # ---- FILTRO DE TENDENCIA ----
+                # ---- FILTRO DE TENDENCIA (ajustado, antes de usar) ----
                 df['ma3'] = df['Close'].rolling(window=3).mean()
                 df['ma5'] = df['Close'].rolling(window=5).mean()
-                df['trend_filter'] = (df['Close'] > df['ma3']) & (df['Close'] > df['ma5'])
+                df['trend_filter'] = (df['ma3'] > df['ma5']) & (df['Close'] > df['ma3'])
 
                 # ---- FILTRO DE FUERZA/VOLUMEN (Proxy WAE) ----
                 fast_ema = df['Close'].ewm(span=20, adjust=False).mean()
@@ -112,7 +119,7 @@ if seccion == "Backtesting Darvas":
                 st.success(f"Número de primeras señales detectadas: {num_signals}")
 
                 st.dataframe(
-                    df_signals.head(100),  # Cambia 100 si quieres más o menos
+                    df_signals.head(100),
                     column_config={
                         "Close": st.column_config.NumberColumn("Close", help="Precio de cierre del periodo."),
                         "darvas_high": st.column_config.NumberColumn("darvas_high", help="Máximo de los últimos 20 periodos (techo Darvas)."),
@@ -121,25 +128,24 @@ if seccion == "Backtesting Darvas":
                         "ma5": st.column_config.NumberColumn("ma5", help="Media móvil de 5 periodos (tendencia lenta)."),
                         "wae_value": st.column_config.NumberColumn("wae_value", help="Oscilador: diferencia entre EMAs rápida y lenta (proxy de fuerza/volumen)."),
                         "wae_upper": st.column_config.NumberColumn("wae_upper", help="Umbral: desvío estándar multiplicado por 2 (marca fuerza significativa)."),
-                        "buy_signal": st.column_config.CheckboxColumn("buy_signal", help="True si el cierre rompe el máximo Darvas anterior."),
-                        "trend_filter": st.column_config.CheckboxColumn("trend_filter", help="True si la tendencia es positiva (ma3 y ma5)."),
+                        "buy_signal": st.column_config.CheckboxColumn("buy_signal", help="True si el cierre rompe el máximo Darvas anterior (primera vez tras consolidación)."),
+                        "trend_filter": st.column_config.CheckboxColumn("trend_filter", help="True si la tendencia es positiva (ma3>ma5 y close>ma3)."),
                         "wae_filter": st.column_config.CheckboxColumn("wae_filter", help="True si la fuerza/momentum supera el umbral."),
                         "buy_final": st.column_config.CheckboxColumn("buy_final", help="True si TODAS las condiciones de entrada están OK (ruptura + tendencia + fuerza)."),
                         "sell_signal": st.column_config.CheckboxColumn("sell_signal", help="True si el cierre rompe el mínimo Darvas anterior."),
                     }
                 )
 
-
-            # --- Plot gráfico ---
-            fig, ax = plt.subplots(figsize=(12, 5))
-            ax.plot(df.index, df['Close'], label="Precio Close", color="black")
-            ax.plot(df.index, df['darvas_high'], label="Darvas High", color="green", linestyle="--", alpha=0.6)
-            ax.plot(df.index, df['darvas_low'], label="Darvas Low", color="red", linestyle="--", alpha=0.6)
-            ax.scatter(df.index[df['buy_signal']], df.loc[df['buy_signal'], 'Close'], label="Compra", marker="^", color="blue", s=100)
-            ax.scatter(df.index[df['sell_signal']], df.loc[df['sell_signal'], 'Close'], label="Venta", marker="v", color="orange", s=100)    
-            ax.set_title(f"Darvas Box Backtest - {activo_nombre} [{timeframe}]")
-            ax.legend()
-            st.pyplot(fig)
+                # --- Plot gráfico ---
+                fig, ax = plt.subplots(figsize=(12, 5))
+                ax.plot(df.index, df['Close'], label="Precio Close", color="black")
+                ax.plot(df.index, df['darvas_high'], label="Darvas High", color="green", linestyle="--", alpha=0.6)
+                ax.plot(df.index, df['darvas_low'], label="Darvas Low", color="red", linestyle="--", alpha=0.6)
+                ax.scatter(df.index[df['buy_final']], df.loc[df['buy_final'], 'Close'], label="Señal Entrada", marker="^", color="blue", s=120, zorder=10)
+                ax.scatter(df.index[df['sell_signal']], df.loc[df['sell_signal'], 'Close'], label="Señal Venta", marker="v", color="orange", s=100, zorder=10)
+                ax.set_title(f"Darvas Box Backtest - {activo_nombre} [{timeframe}]")
+                ax.legend()
+                st.pyplot(fig)
 
 
 # ---- AQUÍ SIGUE TODO EL RESTO DE TU APP ----
