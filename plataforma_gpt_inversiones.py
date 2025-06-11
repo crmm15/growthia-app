@@ -73,7 +73,14 @@ if seccion == "Backtesting Darvas":
         window = 20  # Puedes ponerlo parametrizable si quieres
 
         df = df.reset_index(drop=False)
-        df = df.dropna(subset=["Close", "High", "Low"])
+        required_cols = ["Close", "High", "Low"]
+        if not all(col in df.columns for col in required_cols):
+            st.error(f"El DataFrame descargado NO tiene todas las columnas requeridas: {required_cols}.")
+            st.dataframe(df)
+        else:
+            df = df.dropna(subset=required_cols)
+            # ... el resto del procesamiento ...
+
         df['darvas_high'] = df['High'].rolling(window=window, min_periods=1).max()
         df['darvas_low'] = df['Low'].rolling(window=window, min_periods=1).min()
         df['buy_signal'] = df['Close'] > df['darvas_high'].shift(1)
@@ -428,7 +435,7 @@ if archivo is not None:
                             st.markdown(f"⚠️ Si la acción cae por debajo de {break_even:.2f}, empiezás a tener pérdidas. El riesgo es alto, pero finito (hasta que la acción llegue a $0)")
                             st.markdown("🛡 Estrategia usada si estás dispuesto a comprar la acción más barata que hoy")
 
-                if st.button("📤 Enviar esta simulación a Telegram"):
+                if st.button("📤 Enviar esta simulación a Telegram", key="Enviar_Simulación"):
                     enviar_grafico_simulacion_telegram(fig, selected_ticker)
 
             else:
