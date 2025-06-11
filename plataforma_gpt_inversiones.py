@@ -10,8 +10,6 @@ import math
 import requests  # Para enviar mensajes a Telegram
 from scipy.stats import norm
 
-seccion = st.sidebar.radio(...)
-
 # --- SECCIÓN: BACKTESTING DARVAS BOX ---
 st.header("📦 Backtesting Estrategia Darvas Box")
 
@@ -79,7 +77,7 @@ if st.button("Ejecutar Backtest Darvas"):
         st.pyplot(fig)
 
         st.info("Esta es una versión demo con lógica Darvas base y sin confirmaciones extra. ¿Quieres agregar la lógica de tendencia/volumen o estadísticas de resultados?")
-
+)
 st.set_page_config(page_title="Agent GrowthIA M&M", layout="wide")
 st.title("🧠 Plataforma Integral para Gestión y Simulación de Inversiones")
 
@@ -94,7 +92,10 @@ def calcular_delta_call_put(S, K, T, r, sigma, tipo="CALL"):
     except Exception:
         return None
 
-seccion = st.sidebar.radio("📂 Elegí una sección", ["Inicio", "Gestor de Portafolio", "Simulador de Opciones", "Dashboard de Desempeño"])
+seccion = st.sidebar.radio(
+    "📂 Elegí una sección", 
+    ["Inicio", "Gestor de Portafolio", "Simulador de Opciones", "Dashboard de Desempeño", "Backtesting Darvas"]
+)
 
 def generar_y_enviar_resumen_telegram():
     archivo_log = "registro_acciones.csv"
