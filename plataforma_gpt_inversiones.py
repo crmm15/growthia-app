@@ -497,8 +497,8 @@ if archivo is not None:
                 st.line_chart(df_filtrado.set_index("Fecha")["Rentabilidad %"])
             except FileNotFoundError:
                 st.error("No se encontró 'registro_acciones.csv'. Ejecutá primero el gestor.")
-else:
-    st.info("Subí el archivo Excel para empezar.")
+#else:
+   # st.info("Subí el archivo Excel para empezar.")
 
 
 # --- Envío automático del resumen diario por Telegram a las 23hs ---
