@@ -45,7 +45,7 @@ if seccion == "Backtesting Darvas":
     fecha_inicio = st.date_input("Desde", value=datetime.date(2023, 1, 1), key="darvas_ini")
     fecha_fin = st.date_input("Hasta", value=datetime.date.today(), key="darvas_fin")
 
-    if st.button("Ejecutar Backtest Darvas"):
+    if st.button("Ejecutar Backtest Darvas", key="ejecutar_backtest_darvas"):
         st.info("Descargando datos históricos...")
 
     df = yf.download(
@@ -55,9 +55,6 @@ if seccion == "Backtesting Darvas":
         interval=timeframe,
         progress=False
     )
-
-    if st.button("Ejecutar Backtest Darvas"):
-        st.info("Descargando datos históricos...")
 
     df = yf.download(
         activo,
