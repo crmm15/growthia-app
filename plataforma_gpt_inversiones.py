@@ -77,43 +77,56 @@ if seccion == "Backtesting Darvas":
                 df = df.dropna(subset=required_cols)
 
                 # ---- Cálculo Darvas ----
-                df['darvas_high'] = df['High'].rolling(window=window, min_periods=1).max()
-                df['darvas_low'] = df['Low'].rolling(window=window, min_periods=1).min()
+                                window = 20
+                df = df.reset_index(drop=False)
+                df = df.dropna(subset=required_cols)
 
-                # Señal de ruptura ÚNICA
+                # ---- Cálculo Darvas ----
+                df['darvas_high'] = df['High'].rolling(window=window, min_periods=window).max()
+                df['darvas_low'] = df['Low'].rolling(window=window, min_periods=window).min()
                 df['prev_darvas_high'] = df['darvas_high'].shift(1)
                 df['prev_close'] = df['Close'].shift(1)
-                df['buy_signal'] = (
-                    (df['Close'] > df['prev_darvas_high']) & 
-                    (df['prev_close'] <= df['prev_darvas_high'])
-                )
-
-                df['sell_signal'] = df['Close'] < df['darvas_low'].shift(1)
 
                 # ---- FILTRO DE TENDENCIA (ajustado, antes de usar) ----
-                df['ma3'] = df['Close'].rolling(window=3).mean()
-                df['ma5'] = df['Close'].rolling(window=5).mean()
+                df['ma3'] = df['Close'].rolling(window=3, min_periods=3).mean()
+                df['ma5'] = df['Close'].rolling(window=5, min_periods=5).mean()
                 df['trend_filter'] = (df['ma3'] > df['ma5']) & (df['Close'] > df['ma3'])
 
                 # ---- FILTRO DE FUERZA/VOLUMEN (Proxy WAE) ----
-                fast_ema = df['Close'].ewm(span=20, adjust=False).mean()
-                slow_ema = df['Close'].ewm(span=40, adjust=False).mean()
+                fast_ema = df['Close'].ewm(span=20, min_periods=20, adjust=False).mean()
+                slow_ema = df['Close'].ewm(span=40, min_periods=40, adjust=False).mean()
                 df['wae_value'] = fast_ema - slow_ema
                 bb_length = 20
                 bb_std_mult = 2
-                df['wae_ema'] = df['wae_value'].ewm(span=bb_length, adjust=False).mean()
-                df['wae_std'] = df['wae_value'].rolling(window=bb_length).std()
+                df['wae_ema'] = df['wae_value'].ewm(span=bb_length, min_periods=bb_length, adjust=False).mean()
+                df['wae_std'] = df['wae_value'].rolling(window=bb_length, min_periods=bb_length).std()
                 df['wae_upper'] = df['wae_ema'] + bb_std_mult * df['wae_std']
                 df['wae_filter'] = df['wae_value'] > df['wae_upper']
 
-                # ---- SEÑAL FINAL ----
-                df['buy_final'] = df['buy_signal'] & df['trend_filter'] & df['wae_filter']
+                # Señal ÚNICA de compra: solo si la vela actual rompe por primera vez
+                df['buy_signal'] = (
+                    (df['Close'] > df['prev_darvas_high']) &
+                    (df['prev_close'] <= df['prev_darvas_high'])
+                )
 
-                # --- Tabla con tooltips ---
-                df_signals = df.loc[df['buy_signal'] | df['sell_signal'], [
-                    "Close", "darvas_high", "darvas_low", "ma3", "ma5", "wae_value", "wae_upper",
-                    "buy_signal", "trend_filter", "wae_filter", "buy_final", "sell_signal"
-                ]]
+                df['buy_final'] = (
+                    df['buy_signal'] &
+                    df['trend_filter'] &
+                    df['wae_filter']
+                )
+
+                df['sell_signal'] = (
+                    (df['Close'] < df['darvas_low'].shift(1))
+                )
+
+                # --- SOLO señales válidas donde NO hay None/NaN en los filtros ---
+                df_signals = df.loc[
+                    df['buy_signal'] | df['sell_signal'],
+                    [
+                        "Close", "darvas_high", "darvas_low", "ma3", "ma5", "wae_value", "wae_upper",
+                        "buy_signal", "trend_filter", "wae_filter", "buy_final", "sell_signal"
+                    ]
+                ].dropna(subset=["ma3", "ma5", "wae_value", "wae_upper"])
 
                 num_signals = len(df_signals)
                 st.success(f"Número de primeras señales detectadas: {num_signals}")
