@@ -62,11 +62,12 @@ if seccion == "Backtesting Darvas":
         st.success(f"Datos descargados: {len(df)} filas")
         st.dataframe(df.head(10))
 
-        # Normaliza las columnas para el caso MultiIndex/tupla
+        # --- Solución robusta: normaliza nombres ---
         if isinstance(df.columns[0], tuple):
-            df.columns = [c[0].capitalize() for c in df.columns]
+            # Extrae solo el primer elemento de cada tupla
+            df.columns = [col[0].capitalize() for col in df.columns]
         else:
-            df.columns = [str(c).capitalize() for c in df.columns]
+            df.columns = [str(col).capitalize() for col in df.columns]
 
         st.write("Columnas normalizadas:", list(df.columns))
         st.write("Columnas del DataFrame:", list(df.columns))  # <-- para debug visual
