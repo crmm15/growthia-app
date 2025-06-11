@@ -70,19 +70,29 @@ if seccion == "Backtesting Darvas":
             df['sell_signal'] = (df['Close'] < df['darvas_low'].shift(1))
 
             st.write("Primeras señales detectadas:")
-            st.dataframe(df.loc[df['buy_signal'] | df['sell_signal'], ["Close", "darvas_high", "darvas_low", "buy_signal", "sell_signal"]].head(10))
 
-            fig, ax = plt.subplots(figsize=(12, 5))
-            ax.plot(df.index, df['Close'], label="Precio Close", color="black")
-            ax.plot(df.index, df['darvas_high'], label="Darvas High", color="green", linestyle="--", alpha=0.6)
-            ax.plot(df.index, df['darvas_low'], label="Darvas Low", color="red", linestyle="--", alpha=0.6)
-            ax.scatter(df.index[df['buy_signal']], df['Close'][df['buy_signal']], label="Compra", marker="^", color="blue", s=100)
-            ax.scatter(df.index[df['sell_signal']], df['Close'][df['sell_signal']], label="Venta", marker="v", color="orange", s=100)
-            ax.set_title(f"Darvas Box Backtest - {activo_nombre} [{timeframe}]")
-            ax.legend()
-            st.pyplot(fig)
+            if df.empty:
+                st.error("No hay datos disponibles para este activo y timeframe.")
+            else:
+                st.dataframe(df.loc[df['buy_signal'] | df['sell_signal'], ["Close", "darvas_high", "darvas_low", "buy_signal", "sell_signal"]].head(10))
 
-            st.info("Esta es una versión demo con lógica Darvas base y sin confirmaciones extra. ¿Quieres agregar la lógica de tendencia/volumen o estadísticas de resultados?")
+                fig, ax = plt.subplots(figsize=(12, 5))
+                ax.plot(df.index, df['Close'], label="Precio Close", color="black")
+                df['darvas_high'] = df['High'].rolling(window=window, min_periods=1).max()
+                df['darvas_low'] = df['Low'].rolling(window=window, min_periods=1).min()
+                df['darvas_high'] = df['darvas_high'].reindex(df.index)
+                df['darvas_low'] = df['darvas_low'].reindex(df.index)
+                df['buy_signal'] = (df['Close'] > df['darvas_high'].shift(1))
+                df['sell_signal'] = (df['Close'] < df['darvas_low'].shift(1))
+                ax.plot(df.index, df['darvas_high'], label="Darvas High", color="green", linestyle="--", alpha=0.6)
+                ax.plot(df.index, df['darvas_low'], label="Darvas Low", color="red", linestyle="--", alpha=0.6)
+                ax.scatter(df.index[df['buy_signal']], df['Close'][df['buy_signal']], label="Compra", marker="^", color="blue", s=100)
+                ax.scatter(df.index[df['sell_signal']], df['Close'][df['sell_signal']], label="Venta", marker="v", color="orange", s=100)
+                ax.set_title(f"Darvas Box Backtest - {activo_nombre} [{timeframe}]")
+                ax.legend()
+                st.pyplot(fig)
+
+                st.info("Esta es una versión demo con lógica Darvas base y sin confirmaciones extra. ¿Quieres agregar la lógica de tendencia/volumen o estadísticas de resultados?")
 
 # ---- AQUÍ SIGUE TODO EL RESTO DE TU APP ----
 # (Gestor de Portafolio, Simulador de Opciones, Dashboard, Inicio, etc)
