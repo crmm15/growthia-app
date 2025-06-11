@@ -69,10 +69,9 @@ if seccion == "Backtesting Darvas":
         else:
             df.columns = [str(col).capitalize() for col in df.columns]
 
-        st.write("Columnas normalizadas:", list(df.columns))
-        st.write("Columnas del DataFrame:", list(df.columns))  # <-- para debug visual
+        #st.write("Columnas normalizadas:", list(df.columns))
+        #st.write("Columnas del DataFrame:", list(df.columns))  # <-- para debug visual
        
-
         required_cols = ["Close", "High", "Low"]
         if not all(col in df.columns for col in required_cols):
             st.error(f"El DataFrame descargado NO tiene todas las columnas requeridas: {required_cols}.")
@@ -89,8 +88,7 @@ if seccion == "Backtesting Darvas":
             df['sell_signal'] = df['Close'] < df['darvas_low'].shift(1)
 
             st.write("Primeras señales detectadas:")
-            st.dataframe(df.loc[df['buy_signal'] | df['sell_signal'],
-                                ["Close", "darvas_high", "darvas_low", "buy_signal", "sell_signal"]].head(10))
+            st.dataframe(df.loc[df['buy_signal'] | df['sell_signal'],["Close", "darvas_high", "darvas_low", "buy_signal", "sell_signal"]].head(10))
 
             fig, ax = plt.subplots(figsize=(12, 5))
             ax.plot(df.index, df['Close'], label="Precio Close", color="black")
