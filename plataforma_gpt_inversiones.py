@@ -75,7 +75,7 @@ if seccion == "Backtesting Darvas":
         required_cols = ["Close", "High", "Low"]
         if not all(col in df.columns for col in required_cols):
             st.error(f"El DataFrame descargado NO tiene todas las columnas requeridas: {required_cols}.")
-            st.write("Columnas reales:", list(df.columns))
+            #st.write("Columnas reales:", list(df.columns))
             st.dataframe(df)
         else:
             window = 20
