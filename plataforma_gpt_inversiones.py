@@ -479,7 +479,6 @@ if archivo is not None:
                 expiraciones,
                 key=lambda x: abs((pd.to_datetime(x) - pd.Timestamp.today()).days - dias_a_vencimiento)
             )
-
             cadena = ticker_yf.option_chain(fecha_venc)
             tabla_opciones = cadena.calls if tipo_opcion == "CALL" else cadena.puts
             tabla_opciones = tabla_opciones.dropna(subset=["bid", "ask"])
@@ -487,7 +486,6 @@ if archivo is not None:
             if tabla_opciones.empty:
                 st.warning("⚠ No hay opciones válidas para ese strike.")
             else:
-                # Aquí adentro SÍ puedes usar fila, premium, sigma, etc.
                 fila = tabla_opciones.loc[np.abs(tabla_opciones["strike"] - strike_price).idxmin()]
                 premium = (fila["bid"] + fila["ask"]) / 2
 
@@ -495,56 +493,7 @@ if archivo is not None:
                 st.markdown(f"**Strike simulado:** ${strike_price}")
                 st.markdown(f"**Prima estimada:** ${premium:.2f}")
                 st.markdown(f"**Vencimiento elegido:** {fecha_venc}")
-
-                try:
-                    if "delta" in fila and not pd.isna(fila["delta"]):
-                        delta = fila["delta"]
-                    else:
-                        T = dias_a_vencimiento / 365
-                        r = 0.02
-                        sigma = fila["impliedVolatility"] if "impliedVolatility" in fila and not pd.isna(fila["impliedVolatility"]) else 0.25
-                        delta = calcular_delta_call_put(precio_actual, strike_price, T, r, sigma, tipo_opcion)
-
-                    if delta is not None:
-                        prob = abs(delta) * 100
-                        st.markdown(f"**Probabilidad estimada de que se ejecute la opción (Delta): ~{prob:.1f}%**")
-                    else:
-                        st.warning("⚠ No se pudo calcular el delta estimado.")
-                except Exception as ex:
-                    st.warning(f"⚠ Error al calcular el delta: {ex}")
-
-                S = np.linspace(precio_actual * 0.6, precio_actual * 1.4, 100)
-                payoff = calcular_payoff_call(S, strike_price, premium) if tipo_opcion == "CALL" else calcular_payoff_put(S, strike_price, premium)
-                if rol == "Vendedor":
-                    payoff = -payoff
-
-                max_payoff = np.max(payoff)
-                if premium > 0 and rol == "Comprador":
-                    rentabilidad_pct = (max_payoff / premium) * 100
-                    st.markdown(f"💰 **Rentabilidad máxima estimada sobre la prima invertida: ~{rentabilidad_pct:.1f}%**")
-
-                break_even = strike_price + premium if tipo_opcion == "CALL" else strike_price - premium
-                if rol == "Vendedor":
-                    break_even = strike_price - premium if tipo_opcion == "CALL" else strike_price + premium
-
-                fig, ax = plt.subplots(figsize=(5, 3))
-                ax.xaxis.set_major_formatter(plt.matplotlib.ticker.StrMethodFormatter('${x:,.0f}'))
-                ax.yaxis.set_major_formatter(plt.matplotlib.ticker.StrMethodFormatter('${x:,.0f}'))
-                ax.set_xlabel("Precio del activo al vencimiento (USD)")
-                ax.set_ylabel("Resultado neto (USD)")
-                ax.plot(S, payoff, label=f"Payoff ({rol})")
-                ax.axhline(0, color="gray", linestyle="--")
-                ax.axvline(strike_price, color="red", linestyle="--", label="Strike")
-                ax.axvline(break_even, color="green", linestyle="--", label="Break-even")
-                ax.set_title(f"{tipo_opcion} - {selected_ticker} ({nivel_riesgo})")
-                ax.legend()
-                st.pyplot(fig)
-
-                # ... Expander blocks ...
-                # (puedes dejar igual que ya lo tienes)
-
-                if st.button("📤 Enviar esta simulación a Telegram", key="Enviar_Simulación"):
-                    enviar_grafico_simulacion_telegram(fig, selected_ticker)
+                # ...todo el resto del código usando fecha_venc...
         else:
             st.warning("⚠ No se encontró cadena de opciones para este ticker.")
 
