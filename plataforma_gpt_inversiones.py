@@ -22,62 +22,13 @@ seccion = st.sidebar.radio(
     ]
 )
 
-# =============================
-# 2. FUNCIONES DE LOS INDICADORES
-# =============================
-
-# --- Función para WAE (Waddah Attar Explosion) ---
-def calc_wae(df, sensitivity=150, fastLength=20, slowLength=40, channelLength=20, mult=2.0):
-    # MACD y cambio de MACD * sensibilidad
-    fastMA = df['Close'].ewm(span=fastLength, adjust=False).mean()
-    slowMA = df['Close'].ewm(span=slowLength, adjust=False).mean()
-    macd = fastMA - slowMA
-    macd_prev = macd.shift(1)
-    t1 = (macd - macd_prev) * sensitivity
-
-    # Bollinger Bands
-    basis = df['Close'].rolling(window=channelLength, min_periods=channelLength).mean()
-    dev = df['Close'].rolling(window=channelLength, min_periods=channelLength).std(ddof=0) * mult
-    bb_upper = basis + dev
-    bb_lower = basis - dev
-    e1 = bb_upper - bb_lower  # ExplosionLine
-
-    # DeadZone = rma(true range, 100) * 3.7
-    tr1 = df['High'] - df['Low']
-    tr2 = np.abs(df['High'] - df['Close'].shift(1))
-    tr3 = np.abs(df['Low'] - df['Close'].shift(1))
-    tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
-    DEAD_ZONE = tr.rolling(window=100, min_periods=100).mean() * 3.7
-
-    # Trend
-    trendUp = np.where(t1 >= 0, t1, 0)
-    trendDown = np.where(t1 < 0, -t1, 0)
-
-    # Empaquetado
-    df['wae_trendUp'] = trendUp
-    df['wae_trendDown'] = trendDown
-    df['wae_e1'] = e1
-    df['wae_deadzone'] = DEAD_ZONE
-    return df
-
-# --- Función para MavilimW (versión simplificada Python) ---
-def calc_mavilimw(df, fmal=3, smal=5):
-    # MavilimW original usa varias WMA anidadas, pero el core = wma(close, 3), wma(..., 5)
-    # Implementamos versión base: MavilimW_line = wma(wma(wma(wma(wma(close, 3), 5), 8), 13), 21)
-    M1 = df['Close'].rolling(window=3, min_periods=3).mean()
-    M2 = M1.rolling(window=5, min_periods=5).mean()
-    M3 = M2.rolling(window=8, min_periods=8).mean()
-    M4 = M3.rolling(window=13, min_periods=13).mean()
-    M5 = M4.rolling(window=21, min_periods=21).mean()
-    return M5
-
 # ===============================
 # 3. SECCIÓN BACKTESTING DARVAS
 # ===============================
 if seccion == "Backtesting Darvas":
     st.header("📦 Backtesting Estrategia Darvas Box")
 
-    # Parámetros fijos de los indicadores (puedes hacerlos variables después)
+    # Parámetros fijos de los indicadores
     SENSITIVITY = 150
     FAST_EMA = 20
     SLOW_EMA = 40
@@ -85,6 +36,49 @@ if seccion == "Backtesting Darvas":
     BB_MULT = 2.0
     DARVAS_WINDOW = 20  # igual que en la config de TradingView
 
+    # ==============================
+    # Funciones auxiliares
+
+    def calc_mavilimw(df, fmal=3, smal=5):
+        """Implementa la lógica anidada de medias de MavilimW."""
+        M1 = df['Close'].rolling(window=fmal, min_periods=fmal).mean()
+        M2 = M1.rolling(window=smal, min_periods=smal).mean()
+        M3 = M2.rolling(window=fmal+smal, min_periods=fmal+smal).mean()
+        M4 = M3.rolling(window=fmal+2*smal, min_periods=fmal+2*smal).mean()
+        M5 = M4.rolling(window=2*fmal+2*smal, min_periods=2*fmal+2*smal).mean()
+        return M5  # Última capa, igual al "MAWW" del Pine Script
+
+    def calc_wae(df, sensitivity=150, fastLength=20, slowLength=40, channelLength=20, mult=2.0):
+        # MACD de hoy y ayer
+        fastMA = df['Close'].ewm(span=fastLength, adjust=False).mean()
+        slowMA = df['Close'].ewm(span=slowLength, adjust=False).mean()
+        macd = fastMA - slowMA
+        macd_shift = macd.shift(1)
+        t1 = (macd - macd_shift) * sensitivity
+
+        # Bollinger Bands
+        basis = df['Close'].rolling(window=channelLength).mean()
+        dev = df['Close'].rolling(window=channelLength).std(ddof=0) * mult
+        bb_upper = basis + dev
+        bb_lower = basis - dev
+        e1 = bb_upper - bb_lower
+
+        # Dead Zone igual que Pine Script: promedio móvil del true range (TR)
+        true_range = np.maximum(df['High'] - df['Low'], np.maximum(
+            np.abs(df['High'] - df['Close'].shift(1)),
+            np.abs(df['Low'] - df['Close'].shift(1))))
+        deadzone = pd.Series(true_range).rolling(window=100).mean().fillna(0) * 3.7
+
+        trendUp = np.where(t1 >= 0, t1, 0)
+        # trendDown = np.where(t1 < 0, -t1, 0)  # Si alguna vez quieres graficar el histograma bajista
+
+        df['wae_trendUp'] = trendUp
+        df['wae_e1'] = e1
+        df['wae_deadzone'] = deadzone
+        return df
+
+    # ==============================
+    # UI selección
     activos_predef = {
         "BTC/USD": "BTC-USD",
         "ETH/USD": "ETH-USD",
@@ -144,7 +138,8 @@ if seccion == "Backtesting Darvas":
                     (df['prev_close'] <= df['prev_darvas_high'])
                 )
                 df['sell_signal'] = (
-                    (df['Close'] < df['darvas_low'].shift(1))
+                    (df['Close'] < df['darvas_low'].shift(1)) &
+                    (df['prev_close'] >= df['darvas_low'].shift(1))
                 )
 
                 # ==============================
@@ -194,7 +189,7 @@ if seccion == "Backtesting Darvas":
                         "trend_filter": st.column_config.CheckboxColumn("trend_filter", help="True si la tendencia es alcista (Close > MavilimW)."),
                         "wae_filter": st.column_config.CheckboxColumn("wae_filter", help="True si el histograma supera ambos umbrales de fuerza."),
                         "buy_final": st.column_config.CheckboxColumn("buy_final", help="True si TODAS las condiciones de entrada están OK (ruptura + tendencia + fuerza)."),
-                        "sell_signal": st.column_config.CheckboxColumn("sell_signal", help="True si el cierre rompe el mínimo Darvas anterior."),
+                        "sell_signal": st.column_config.CheckboxColumn("sell_signal", help="True si el cierre rompe el mínimo Darvas anterior (solo la primera vez)."),
                     }
                 )
 
@@ -211,11 +206,9 @@ if seccion == "Backtesting Darvas":
                 ax.legend()
                 st.pyplot(fig)
 
+
 # ---- AQUÍ SIGUE TODO EL RESTO DE TU APP ----
 # (Gestor de Portafolio, Simulador de Opciones, Dashboard, Inicio, etc)
-# No cambió, solo se muestra cuando esa opción es seleccionada en el menú.
-
-# Ejemplo:
 if seccion == "Inicio":
     st.markdown(open("prompt_inicial.md", "r", encoding="utf-8").read())
 
